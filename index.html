@@ -15,8 +15,6 @@
       --text: #f9fafb;
       --muted: #9ca3af;
       --border: #1f2933;
-
-      /* Enterprise bold department colours */
       --kia: #ff008c;
       --nissan: #007aff;
       --gwm: #00e676;
@@ -83,13 +81,6 @@
     .subtitle {
       font-size: 0.8rem;
       color: var(--muted);
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.8rem;
     }
 
     .pill {
@@ -175,7 +166,6 @@
       font-size: 0.9rem;
     }
 
-    /* Appointment tiles */
     .appt-card {
       display: flex;
       background: var(--card);
@@ -199,6 +189,11 @@
       flex-shrink: 0;
       background: #4b5563;
     }
+
+    .kia-strip { background: var(--kia); }
+    .nissan-strip { background: var(--nissan); }
+    .gwm-strip { background: var(--gwm); }
+    .used-strip { background: var(--used); }
 
     .appt-body {
       padding: 10px 14px;
@@ -226,11 +221,29 @@
       color: #0ea5e9;
     }
 
-    /* Department colour logic */
-    .kia { background: var(--kia); }
-    .nissan { background: var(--nissan); }
-    .gwm { background: var(--gwm); }
-    .used { background: var(--used); }
+    .appt-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 14px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .appt-meta strong { color: var(--text); }
+
+    .appt-line {
+      margin-top: 4px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .appt-comments {
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      opacity: 0.9;
+    }
 
     .fab {
       position: absolute;
@@ -251,7 +264,6 @@
       border: none;
     }
 
-    /* Modal */
     .backdrop {
       position: fixed;
       inset: 0;
@@ -295,9 +307,15 @@
       display: flex;
       flex-direction: column;
       gap: 3px;
+      font-size: 0.82rem;
     }
 
-    .field label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; }
+    .field label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
 
     .field input,
     .field select,
@@ -315,11 +333,25 @@
       border-top: 1px solid rgba(148,163,184,0.4);
       display: flex;
       justify-content: space-between;
+      gap: 10px;
     }
 
-    .btn { border-radius: 999px; padding: 7px 14px; cursor: pointer; border: 1px solid rgba(148,163,184,0.6); }
-    .btn-primary { background: #007aff; color: white; border: none; }
-    .btn-danger { color: #ff6d6d; border-color: #ff6d6d; }
+    .btn {
+      border-radius: 999px;
+      padding: 7px 14px;
+      border: 1px solid rgba(148,163,184,0.6);
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .btn-primary { background: #007aff; border-color: #007aff; color: white; }
+    .btn-danger { border-color: #f97373; color: #fecaca; }
+
+    @media (max-width: 768px) {
+      .shell { padding: 14px 12px 22px; border-radius: 0; }
+      .modal-grid { grid-template-columns: 1fr; }
+      .fab { right: 16px; bottom: 16px; }
+    }
   </style>
 </head>
 
@@ -412,16 +444,31 @@
             <div class="field"><label>Date</label><input type="date" id="date"></div>
             <div class="field"><label>Time</label><input type="time" id="time"></div>
 
-            <div class="field"><label>Show</label>
-              <select id="show"><option value="">Pending</option><option value="Y">Y</option><option value="N">N</option></select>
+            <div class="field">
+              <label>Show</label>
+              <select id="show">
+                <option value="">Pending</option>
+                <option value="Y">Y</option>
+                <option value="N">N</option>
+              </select>
             </div>
 
-            <div class="field"><label>Test Drive</label>
-              <select id="td"><option value="">Pending</option><option value="Y">Y</option><option value="N">N"></option></select>
+            <div class="field">
+              <label>Test Drive</label>
+              <select id="td">
+                <option value="">Pending</option>
+                <option value="Y">Y</option>
+                <option value="N">N</option>
+              </select>
             </div>
 
-            <div class="field"><label>Sold</label>
-              <select id="sold"><option value="">Pending</option><option value="Y">Y</option><option value="N">N"></option></select>
+            <div class="field">
+              <label>Sold</label>
+              <select id="sold">
+                <option value="">Pending</option>
+                <option value="Y">Y</option>
+                <option value="N">N</option>
+              </select>
             </div>
 
             <div class="field"><label>Deal #</label><input id="deal"></div>
@@ -445,15 +492,12 @@
   </div>
 
   <script>
-    /* -------------------------
-       YOUR REAL SUPABASE DETAILS
-       ------------------------- */
+    // === Supabase config (your real project) ===
     const SUPABASE_URL = "https://tfelmjnmedfeplcueevu.supabase.co";
     const SUPABASE_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmZWxtam5tZWRmZXBsY3VlZXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzMDE0OTMsImV4cCI6MjA3OTg3NzQ5M30.UFv00DEM570CxeFKAUV6LH424joWo3CDTuHhyIbuh80";
 
     const TABLE = "appointments";
-
     const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let appointments = [];
@@ -485,29 +529,30 @@
     const dealEl = document.getElementById("deal");
     const commentsEl = document.getElementById("comments");
 
-    function deptClass(d) {
-      if (!d) return "";
-      const L = d.toLowerCase();
-      if (L.includes("kia")) return "kia";
-      if (L.includes("nissan")) return "nissan";
-      if (L.includes("gwm")) return "gwm";
-      if (L.includes("used")) return "used";
+    function deptStripClass(dep) {
+      if (!dep) return "";
+      const d = dep.toLowerCase();
+      if (d.includes("kia")) return "kia-strip";
+      if (d.includes("nissan")) return "nissan-strip";
+      if (d.includes("gwm")) return "gwm-strip";
+      if (d.includes("used")) return "used-strip";
       return "";
     }
 
-    function normalizeDate(str) {
-      if (!str) return null;
-      if (str.includes("/")) {
-        const [dd, mm, yyyy] = str.split("/");
-        return `${yyyy}-${mm}-${dd}`;
-      }
-      return str;
+    function normalizeDate(value) {
+      // input[type=date] always gives YYYY-MM-DD; keep as-is
+      return value || null;
     }
 
     async function loadAppointments() {
       listEl.innerHTML = "<div class='empty'>Loading appointments…</div>";
 
-      const { data, error } = await supa.from(TABLE).select("*");
+      const { data, error } = await supa
+        .from(TABLE)
+        .select("*")
+        .order("appt_date", { ascending: true })
+        .order("appt_time", { ascending: true });
+
       if (error) {
         console.error(error);
         listEl.innerHTML = "<div class='empty'>Error loading appointments.</div>";
@@ -515,38 +560,34 @@
       }
 
       appointments = data || [];
-
-      appointments.sort((a, b) => {
-        const da = new Date((a.date || "1970-01-01") + "T" + (a.time || "00:00"));
-        const db = new Date((b.date || "1970-01-01") + "T" + (b.time || "00:00"));
-        return da - db;
-      });
-
       buildSalesFilterOptions();
       renderAppointments();
     }
 
     function buildSalesFilterOptions() {
-      const unique = new Set();
-      appointments.forEach(a => { if (a.sales_person) unique.add(a.sales_person); });
+      const set = new Set();
+      appointments.forEach(a => {
+        if (a.sales_person) set.add(a.sales_person);
+      });
 
       filterSalesEl.innerHTML = "<option value=''>All</option>";
-      [...unique].sort().forEach(name => {
-        const o = document.createElement("option");
-        o.value = name;
-        o.textContent = name;
-        filterSalesEl.appendChild(o);
+      [...set].sort().forEach(name => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        filterSalesEl.appendChild(opt);
       });
     }
 
     function applyFilters(list) {
       let res = [...list];
+
       const d = filterDateEl.value;
       const s = filterSalesEl.value;
       const dep = filterDeptEl.value;
 
       if (d) {
-        res = res.filter(a => a.date === d);
+        res = res.filter(a => a.appt_date === d);
         subLabelEl.textContent = "Filtered by date";
       } else {
         subLabelEl.textContent = "Auto-sorted by date & time";
@@ -567,33 +608,46 @@
         return;
       }
 
-      const html = filtered.map(a => `
-        <article class="appt-card" data-id="${a.id}">
-          <div class="dept-strip ${deptClass(a.department)}"></div>
+      const html = filtered
+        .map(a => {
+          const stripClass = deptStripClass(a.department);
+          const showText =
+            a.appt_show === true ? "Y" : a.appt_show === false ? "N" : "Pending";
+          const tdText =
+            a.test_drive === true ? "Y" : a.test_drive === false ? "N" : "Pending";
+          const soldText =
+            a.sold === true ? "Y" : a.sold === false ? "N" : "Pending";
 
-          <div class="appt-body">
-            <div class="appt-top">
-              <div class="appt-name">${a.customer_name || ""}</div>
-              <div class="appt-time">${a.time || ""}</div>
+          return `
+          <article class="appt-card" data-id="${a.id}">
+            <div class="dept-strip ${stripClass}"></div>
+            <div class="appt-body">
+              <div class="appt-top">
+                <div class="appt-name">${a.customer_nam || ""}</div>
+                <div class="appt-time">${a.appt_time || ""}</div>
+              </div>
+              <div class="appt-meta">
+                <div><strong>${a.sales_person || ""}</strong></div>
+                ${a.department ? `<div>${a.department}</div>` : ""}
+                ${a.vehicle_intere ? `<div>${a.vehicle_intere}</div>` : ""}
+                ${a.stock_numbe ? `<div>Stock ${a.stock_numbe}</div>` : ""}
+              </div>
+              <div class="appt-line">
+                ${a.appt_date || ""}${
+            a.business_mar ? " · BM: " + a.business_mar : ""
+          }${a.deal_number ? " · Deal: " + a.deal_number : ""}
+                · Show: ${showText} · Test: ${tdText} · Sold: ${soldText}
+              </div>
+              ${
+                a.comments
+                  ? `<div class="appt-comments">${a.comments}</div>`
+                  : ""
+              }
             </div>
-
-            <div class="appt-meta">
-              <div><strong>${a.sales_person || ""}</strong></div>
-              ${a.department ? `<div>${a.department}</div>` : ""}
-              ${a.vehicle ? `<div>${a.vehicle}</div>` : ""}
-              ${a.stock_number ? `<div>Stock ${a.stock_number}</div>` : ""}
-            </div>
-
-            <div class="appt-line">
-              ${a.date} 
-              ${a.business_manager ? " · BM: " + a.business_manager : ""}
-              ${a.deal_number ? " · Deal: " + a.deal_number : ""}
-            </div>
-
-            ${a.comments ? `<div class="appt-comments">${a.comments}</div>` : ""}
-          </div>
-        </article>
-      `).join("");
+          </article>
+        `;
+        })
+        .join("");
 
       listEl.innerHTML = html;
     }
@@ -608,42 +662,52 @@
 
     function openModalForEdit(a) {
       modalTitleEl.textContent = "Edit Appointment";
-
       idEl.value = a.id;
-      customerEl.value = a.customer_name || "";
-      phoneEl.value = a.phone_number || "";
+      customerEl.value = a.customer_nam || "";
+      phoneEl.value = a.phone || "";
       salesEl.value = a.sales_person || "";
-      bmEl.value = a.business_manager || "";
+      bmEl.value = a.business_mar || "";
       deptEl.value = a.department || "";
-      vehicleEl.value = a.vehicle || "";
-      stockEl.value = a.stock_number || "";
-      dateEl.value = a.date || "";
-      timeEl.value = a.time || "";
-      showEl.value = a.appt_show || "";
-      tdEl.value = a.test_drive || "";
-      soldEl.value = a.sold || "";
+      vehicleEl.value = a.vehicle_intere || "";
+      stockEl.value = a.stock_numbe || "";
+      dateEl.value = a.appt_date || "";
+      timeEl.value = a.appt_time || "";
+
+      showEl.value =
+        a.appt_show === true ? "Y" : a.appt_show === false ? "N" : "";
+      tdEl.value =
+        a.test_drive === true ? "Y" : a.test_drive === false ? "N" : "";
+      soldEl.value = a.sold === true ? "Y" : a.sold === false ? "N" : "";
+
       dealEl.value = a.deal_number || "";
       commentsEl.value = a.comments || "";
-
       backdropEl.style.display = "flex";
     }
 
-    function closeModal() { backdropEl.style.display = "none"; }
+    function closeModal() {
+      backdropEl.style.display = "none";
+    }
+
+    function toBoolFromSelect(val) {
+      if (val === "Y") return true;
+      if (val === "N") return false;
+      return null;
+    }
 
     function collectPayload() {
       return {
-        customer_name: customerEl.value.trim(),
-        phone_number: phoneEl.value.trim(),
+        customer_nam: customerEl.value.trim(),
+        phone: phoneEl.value.trim(),
         sales_person: salesEl.value.trim(),
-        business_manager: bmEl.value.trim(),
+        business_mar: bmEl.value.trim(),
         department: deptEl.value || null,
-        vehicle: vehicleEl.value.trim(),
-        stock_number: stockEl.value.trim(),
-        date: normalizeDate(dateEl.value),
-        time: timeEl.value || null,
-        appt_show: showEl.value || null,
-        test_drive: tdEl.value || null,
-        sold: soldEl.value || null,
+        vehicle_intere: vehicleEl.value.trim(),
+        stock_numbe: stockEl.value.trim(),
+        appt_date: normalizeDate(dateEl.value),
+        appt_time: timeEl.value || null,
+        appt_show: toBoolFromSelect(showEl.value),
+        test_drive: toBoolFromSelect(tdEl.value),
+        sold: toBoolFromSelect(soldEl.value),
         deal_number: dealEl.value.trim(),
         comments: commentsEl.value.trim()
       };
@@ -653,15 +717,15 @@
       const payload = collectPayload();
       const id = idEl.value;
 
-      let result;
+      let resp;
       if (id) {
-        result = await supa.from(TABLE).update(payload).eq("id", id);
+        resp = await supa.from(TABLE).update(payload).eq("id", id);
       } else {
-        result = await supa.from(TABLE).insert(payload);
+        resp = await supa.from(TABLE).insert(payload);
       }
 
-      if (result.error) {
-        console.error(result.error);
+      if (resp.error) {
+        console.error("Save error:", resp.error);
         alert("Error saving appointment.");
         return;
       }
@@ -672,27 +736,38 @@
 
     async function deleteAppointment() {
       const id = idEl.value;
-      if (!id) { closeModal(); return; }
-
+      if (!id) {
+        closeModal();
+        return;
+      }
       if (!confirm("Delete this appointment?")) return;
 
       const { error } = await supa.from(TABLE).delete().eq("id", id);
-
       if (error) {
-        console.error(error);
+        console.error("Delete error:", error);
         alert("Error deleting appointment.");
         return;
       }
-
       closeModal();
       loadAppointments();
     }
 
+    // Events
     document.getElementById("addBtn").addEventListener("click", openModalForNew);
     document.getElementById("closeBtn").addEventListener("click", closeModal);
     document.getElementById("cancelBtn").addEventListener("click", closeModal);
-    document.getElementById("saveBtn").addEventListener("click", e => { e.preventDefault(); saveAppointment(); });
-    document.getElementById("deleteBtn").addEventListener("click", e => { e.preventDefault(); deleteAppointment(); });
+    document
+      .getElementById("saveBtn")
+      .addEventListener("click", e => {
+        e.preventDefault();
+        saveAppointment();
+      });
+    document
+      .getElementById("deleteBtn")
+      .addEventListener("click", e => {
+        e.preventDefault();
+        deleteAppointment();
+      });
 
     filterDateEl.addEventListener("change", renderAppointments);
     filterSalesEl.addEventListener("change", renderAppointments);
@@ -701,12 +776,16 @@
     listEl.addEventListener("click", e => {
       const card = e.target.closest(".appt-card");
       if (!card) return;
-
       const id = card.dataset.id;
-      const ap = appointments.find(a => String(a.id) === String(id));
-      if (ap) openModalForEdit(ap);
+      const appt = appointments.find(a => String(a.id) === String(id));
+      if (appt) openModalForEdit(appt);
     });
 
+    backdropEl.addEventListener("click", e => {
+      if (e.target === backdropEl) closeModal();
+    });
+
+    // Initial load
     loadAppointments();
   </script>
 </body>
