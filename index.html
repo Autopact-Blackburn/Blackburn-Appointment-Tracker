@@ -806,20 +806,45 @@
   }
 
   function applyFilters(list) {
-    let res = [...list];
+  let res = [...list];
 
-    if (currentView === "week" && weekRange) {
-      res = res.filter(
-        a =>
-          a.appt_date &&
-          a.appt_date >= weekRange.start &&
-          a.appt_date <= weekRange.end
-      );
-    } else if (currentView === "day" && currentDay) {
-      res = res.filter(a => a.appt_date === currentDay);
-    } else if (currentView === "month" && currentMonthValue) {
-      res = res.filter(a => (a.appt_date || "").startsWith(currentMonthValue));
-    }
+  // --- SOLD FILTER FIRST ---
+  if (soldFilterMode === "hide") {
+    res = res.filter(a => a.sold !== true);
+  } else if (soldFilterMode === "only") {
+    res = res.filter(a => a.sold === true);
+  }
+
+  // --- WEEK FILTER ---
+  if (currentView === "week" && weekRange) {
+    res = res.filter(
+      a =>
+        a.appt_date &&
+        a.appt_date >= weekRange.start &&
+        a.appt_date <= weekRange.end
+    );
+    return applyOtherFilters(res);   // apply search/department/etc after week
+  }
+
+  // --- WEEK OFF = SHOW ALL (except sold, already handled above) ---
+  return applyOtherFilters(res);
+}
+function applyOtherFilters(list) {
+  let res = [...list];
+
+  // Date filter (specific day)
+  if (currentView === "day" && currentDay) {
+    res = res.filter(a => a.appt_date === currentDay);
+  }
+
+  // Month dropdown only applies when day filter is NOT active
+  if (!currentDay && filterMonthEl.value) {
+    // Do NOT restrict to month unless user has explicitly changed month
+    // Week OFF mode overrides month restriction — so we skip month filtering
+  }
+
+  // Sales filter
+
 
     const s = filterSalesEl.value;
     const dept = filterDeptEl.value;
@@ -849,13 +874,6 @@
         const dt = new Date(a.appt_date + "T" + a.appt_time);
         return dt < now && a.appt_show !== true;
       });
-    }
-
-    // SOLD FILTER (Option B)
-    if (soldFilterMode === "hide") {
-      res = res.filter(a => a.sold !== true);
-    } else if (soldFilterMode === "only") {
-      res = res.filter(a => a.sold === true);
     }
 
     return res;
