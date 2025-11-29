@@ -27,7 +27,7 @@
       --used: #ff6d00;
     }
 
-    /* Light Mode ------------------------------------------------ */
+    /* Light Mode */
     body.light {
       --bg: #f2f4f8;
       --card: #ffffff;
@@ -74,6 +74,7 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 10px;
+      gap: 10px;
     }
 
     .title {
@@ -90,19 +91,29 @@
       margin-left: 6px;
     }
 
+    .header-left {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
     .header-actions {
       display: flex;
-      gap: 10px;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
     }
 
     .btn-icon {
-      padding: 8px 12px;
+      padding: 8px 10px;
       border-radius: 10px;
       border: 1px solid var(--border);
       background: var(--card);
       color: var(--text);
       cursor: pointer;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
+      white-space: nowrap;
     }
 
     /* Metrics ---------------------------------------------------- */
@@ -149,12 +160,29 @@
       color: var(--text);
       padding: 7px 10px;
       width: 100%;
+      font-size: 0.85rem;
     }
 
-    /* Fix dropdown contrast */
     select option {
       color: #000 !important;
       background: #fff !important;
+    }
+
+    .filter-chip {
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      padding: 7px 12px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .filter-chip.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(56,189,248,0.1);
     }
 
     /* Appointment Cards ----------------------------------------- */
@@ -194,12 +222,45 @@
       margin-top: 4px;
     }
 
-    /* Status colours */
+    /* Status background based on outcome */
     .sold { background: rgba(34,197,94,0.15); }
     .shown { background: rgba(251,191,36,0.15); }
     .overdue { background: rgba(239,68,68,0.15); }
 
-    /* FAB */
+    /* Quick-action row */
+    .quick-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .quick-btn {
+      font-size: 0.75rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      padding: 3px 8px;
+      cursor: pointer;
+    }
+
+    .quick-btn.yes {
+      border-color: var(--success);
+      color: var(--success);
+    }
+
+    .quick-btn.no {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .quick-btn.pending {
+      border-color: var(--muted);
+      color: var(--muted);
+    }
+
+    /* FAB -------------------------------------------------------- */
     .fab {
       position: fixed;
       bottom: 20px;
@@ -210,9 +271,10 @@
       color: #fff;
       font-weight: 600;
       cursor: pointer;
+      border: none;
     }
 
-    /* Slide Panels ------------------------------------------------ */
+    /* Slide Panels ---------------------------------------------- */
     .panel {
       position: fixed;
       top: 0;
@@ -233,13 +295,12 @@
       right: 0;
     }
 
-    /* Panel content scroll */
     .panel .content {
       flex: 1;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       padding: 10px;
-      padding-bottom: 120px; /* space for footer */
+      padding-bottom: 120px;
     }
 
     .panel-title {
@@ -253,7 +314,6 @@
       border-bottom: 1px solid var(--border);
     }
 
-    /* Sticky footer */
     .panel .footer {
       position: sticky;
       bottom: 0;
@@ -270,8 +330,29 @@
       cursor: pointer;
       width: 100%;
       text-align: center;
+      font-size: 0.85rem;
     }
 
+    .field-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    @media (max-width: 600px) {
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .header-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+      .fab {
+        right: 16px;
+        bottom: 16px;
+      }
+    }
   </style>
 </head>
 <body id="body">
@@ -279,7 +360,7 @@
   <div class="shell">
     <!-- HEADER -->
     <div class="header">
-      <div>
+      <div class="header-left">
         <span class="title">Blackburn Appointment Tracker</span>
         <span class="badge">Live</span>
       </div>
@@ -288,6 +369,8 @@
         <button id="toggleMode" class="btn-icon">🌙</button>
         <button id="openSettings" class="btn-icon">⚙</button>
         <button id="openLeaderboard" class="btn-icon">🏆</button>
+        <button id="exportCsv" class="btn-icon">⬇ CSV</button>
+        <button id="emailSnapshot" class="btn-icon">📧 WTD</button>
       </div>
     </div>
 
@@ -296,14 +379,20 @@
 
     <!-- FILTERS -->
     <div class="filters">
+      <select id="filterMonth" class="filter-input"></select>
       <input type="date" id="filterDate" class="filter-input" />
-      <select id="filterSales" class="filter-input"><option value="">All Sales</option></select>
+      <button id="btnWeek" class="filter-chip">This Week</button>
+
+      <select id="filterSales" class="filter-input">
+        <option value="">All Sales</option>
+      </select>
+
       <select id="filterDept" class="filter-input">
         <option value="">All Depts</option>
-        <option>Kia New</option>
-        <option>Nissan New</option>
-        <option>GWM New</option>
-        <option>Used Cars</option>
+        <option value="Kia New">Kia New</option>
+        <option value="Nissan New">Nissan New</option>
+        <option value="GWM New">GWM New</option>
+        <option value="Used Cars">Used Cars</option>
       </select>
     </div>
 
@@ -372,10 +461,10 @@
           <div class="field-label">Department</div>
           <select id="dept" class="filter-input" required>
             <option value="">Select…</option>
-            <option>Kia New</option>
-            <option>Nissan New</option>
-            <option>GWM New</option>
-            <option>Used Cars</option>
+            <option value="Kia New">Kia New</option>
+            <option value="Nissan New">Nissan New</option>
+            <option value="GWM New">GWM New</option>
+            <option value="Used Cars">Used Cars</option>
           </select>
         </div>
 
@@ -440,9 +529,13 @@
 
     <div class="footer">
       <div style="display:flex;gap:8px;">
-        <button class="close-panel" id="deleteAppt" style="border-color:var(--danger);color:var(--danger);">Delete</button>
+        <button class="close-panel" id="deleteAppt" style="border-color:var(--danger);color:var(--danger);">
+          Delete
+        </button>
         <button class="close-panel" id="cancelAppt">Cancel</button>
-        <button class="close-panel" id="saveAppt" style="border-color:var(--accent);color:var(--accent);">Save</button>
+        <button class="close-panel" id="saveAppt" style="border-color:var(--accent);color:var(--accent);">
+          Save
+        </button>
       </div>
     </div>
   </div>
@@ -459,9 +552,11 @@
   const listEl = document.getElementById("list");
   const metricsEl = document.getElementById("metrics");
 
+  const filterMonthEl = document.getElementById("filterMonth");
   const filterDateEl = document.getElementById("filterDate");
   const filterSalesEl = document.getElementById("filterSales");
   const filterDeptEl = document.getElementById("filterDept");
+  const btnWeekEl = document.getElementById("btnWeek");
 
   const panelSettings = document.getElementById("panelSettings");
   const panelLeaderboard = document.getElementById("panelLeaderboard");
@@ -491,10 +586,18 @@
   const salesDatalist = document.getElementById("salesDatalist");
   const bmDatalist = document.getElementById("bmDatalist");
 
+  const btnExportCsv = document.getElementById("exportCsv");
+  const btnEmailSnapshot = document.getElementById("emailSnapshot");
+
   // ---- STATE ----
   let appointments = [];
   let salesStaff = [];
   let businessManagers = [];
+
+  let currentView = "month"; // 'month' | 'day' | 'week'
+  let currentMonthValue = null; // 'YYYY-MM'
+  let currentDay = null;        // 'YYYY-MM-DD'
+  let weekRange = null;         // { start, end }
 
   // ---- UTIL ----
   function deptColour(dept) {
@@ -520,6 +623,18 @@
     return "pending";
   }
 
+  function triLabel(base, val) {
+    if (val === true) return base + ": Yes";
+    if (val === false) return base + ": No";
+    return base + ": Pending";
+  }
+
+  function triClass(val) {
+    if (val === true) return "yes";
+    if (val === false) return "no";
+    return "pending";
+  }
+
   function statusClass(appt) {
     const now = new Date();
     const dt = appt.appt_date
@@ -532,14 +647,41 @@
     return "";
   }
 
-  function withinMTD(appt, ref = new Date()) {
-    if (!appt.appt_date) return false;
-    const d = new Date(appt.appt_date);
-    return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth();
-  }
-
   function lockBodyScroll(lock) {
     document.body.style.overflow = lock ? "hidden" : "";
+  }
+
+  function toISODate(d) {
+    return d.toISOString().slice(0, 10);
+  }
+
+  function getWeekRange(date = new Date()) {
+    const d = new Date(date);
+    const day = d.getDay(); // 0 Sun, 1 Mon
+    const diffToMonday = (day + 6) % 7;
+    const monday = new Date(d);
+    monday.setDate(d.getDate() - diffToMonday);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    return { start: toISODate(monday), end: toISODate(sunday) };
+  }
+
+  function initMonthSelector() {
+    const now = new Date();
+    filterMonthEl.innerHTML = "";
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const val = d.toISOString().slice(0, 7); // YYYY-MM
+      const opt = document.createElement("option");
+      opt.value = val;
+      opt.textContent = d.toLocaleString("default", {
+        month: "long",
+        year: "numeric"
+      });
+      filterMonthEl.appendChild(opt);
+    }
+    currentMonthValue = now.toISOString().slice(0, 7);
+    filterMonthEl.value = currentMonthValue;
   }
 
   // ---- LOAD DATA ----
@@ -587,7 +729,7 @@
     renderBMDatalist();
   }
 
-  // ---- RENDER ----
+  // ---- FILTERING ----
   function renderFilters() {
     const names = new Set();
     appointments.forEach(a => a.sales_person && names.add(a.sales_person));
@@ -602,17 +744,29 @@
 
   function applyFilters(list) {
     let res = [...list];
-    const d = filterDateEl.value;
+
+    if (currentView === "week" && weekRange) {
+      res = res.filter(
+        a =>
+          a.appt_date &&
+          a.appt_date >= weekRange.start &&
+          a.appt_date <= weekRange.end
+      );
+    } else if (currentView === "day" && currentDay) {
+      res = res.filter(a => a.appt_date === currentDay);
+    } else if (currentView === "month" && currentMonthValue) {
+      res = res.filter(a => (a.appt_date || "").startsWith(currentMonthValue));
+    }
+
     const s = filterSalesEl.value;
     const dept = filterDeptEl.value;
-
-    if (d) res = res.filter(a => a.appt_date === d);
     if (s) res = res.filter(a => (a.sales_person || "") === s);
     if (dept) res = res.filter(a => (a.department || "") === dept);
 
     return res;
   }
 
+  // ---- RENDER ----
   function renderAppointments() {
     const filtered = applyFilters(appointments);
 
@@ -626,6 +780,15 @@
       .map(a => {
         const cls = statusClass(a);
         const strip = deptColour(a.department);
+
+        const showLabel = triLabel("Show", a.appt_show);
+        const tdLabel = triLabel("TD", a.test_drive);
+        const soldLabel = triLabel("Sold", a.sold);
+
+        const showCls = triClass(a.appt_show);
+        const tdCls = triClass(a.test_drive);
+        const soldCls = triClass(a.sold);
+
         return `
           <article class="appt-card ${cls}" data-id="${a.id}">
             <div class="dept-strip" style="background:${strip};"></div>
@@ -637,12 +800,14 @@
                 </div>
               </div>
               <div class="appt-meta">
-                ${a.appt_date || ""} · ${a.sales_person || ""}${a.department ? " · " + a.department : ""}
+                ${a.appt_date || ""} · ${a.sales_person || ""}${
+          a.department ? " · " + a.department : ""
+        }
               </div>
               <div class="appt-meta" style="margin-top:2px;">
-                ${a.vehicle_interest ? "· " + a.vehicle_interest : ""}
-                ${a.stock_number ? "· Stock " + a.stock_number : ""}
-                ${a.business_manager ? "· BM: " + a.business_manager : ""}
+                ${a.vehicle_interest ? "· " + a.vehicle_interest + " " : ""}
+                ${a.stock_number ? "· Stock " + a.stock_number + " " : ""}
+                ${a.business_manager ? "· BM: " + a.business_manager + " " : ""}
                 ${a.deal_number ? "· Deal " + a.deal_number : ""}
               </div>
               ${
@@ -650,34 +815,31 @@
                   ? `<div class="appt-meta" style="margin-top:4px;opacity:0.85;">${a.comments}</div>`
                   : ""
               }
+              <div class="quick-row">
+                <button class="quick-btn ${showCls} quick-btn-action"
+                        data-id="${a.id}" data-field="appt_show">${showLabel}</button>
+                <button class="quick-btn ${tdCls} quick-btn-action"
+                        data-id="${a.id}" data-field="test_drive">${tdLabel}</button>
+                <button class="quick-btn ${soldCls} quick-btn-action"
+                        data-id="${a.id}" data-field="sold">${soldLabel}</button>
+              </div>
             </div>
           </article>
         `;
       })
       .join("");
-
-    // attach click handlers to cards after render
-    document.querySelectorAll(".appt-card").forEach(card => {
-      card.addEventListener("click", () => {
-        const id = card.getAttribute("data-id");
-        const appt = appointments.find(a => String(a.id) === String(id));
-        if (appt) openApptModal(appt);
-      });
-    });
   }
 
   function renderMetrics() {
-    const now = new Date();
-    const mtd = appointments.filter(a => withinMTD(a, now));
-
-    const total = mtd.length;
-    const shown = mtd.filter(a => a.appt_show === true).length;
-    const tds = mtd.filter(a => a.test_drive === true).length;
-    const sold = mtd.filter(a => a.sold === true).length;
+    const subset = applyFilters(appointments);
+    const total = subset.length;
+    const shown = subset.filter(a => a.appt_show === true).length;
+    const tds = subset.filter(a => a.test_drive === true).length;
+    const sold = subset.filter(a => a.sold === true).length;
 
     metricsEl.innerHTML = `
       <div class="metric-card">
-        <div class="metric-title">MTD Appointments</div>
+        <div class="metric-title">Appointments</div>
         <div class="metric-value">${total}</div>
       </div>
       <div class="metric-card">
@@ -696,11 +858,10 @@
   }
 
   function renderLeaderboard() {
-    const now = new Date();
-    const mtd = appointments.filter(a => withinMTD(a, now));
+    const subset = applyFilters(appointments);
 
     const bySales = {};
-    mtd.forEach(a => {
+    subset.forEach(a => {
       const name = a.sales_person || "Unknown";
       if (!bySales[name]) bySales[name] = { appts: 0, shown: 0, td: 0, sold: 0 };
       const s = bySales[name];
@@ -716,7 +877,7 @@
 
     if (!rows.length) {
       leaderboardEl.innerHTML =
-        "<div style='color:var(--muted);font-size:0.9rem;'>No MTD data yet.</div>";
+        "<div style='color:var(--muted);font-size:0.9rem;'>No data for current view.</div>";
       return;
     }
 
@@ -838,7 +999,7 @@
       .join("");
   }
 
-  // ---- MODAL ----
+  // ---- APPOINTMENT MODAL ----
   function openApptModal(appt) {
     lockBodyScroll(true);
 
@@ -949,12 +1110,159 @@
     await loadAppointments();
   }
 
+  // ---- QUICK ACTIONS ----
+  async function handleQuickAction(id, field) {
+    const appt = appointments.find(a => String(a.id) === String(id));
+    if (!appt) return;
+
+    const current = appt[field];
+    let next;
+    if (current === null || typeof current === "undefined") next = true;
+    else if (current === true) next = false;
+    else next = null;
+
+    const update = {};
+    update[field] = next;
+
+    const { error } = await supa.from("appointments").update(update).eq("id", id);
+    if (error) {
+      console.error(error);
+      alert("Error updating appointment.");
+      return;
+    }
+
+    appt[field] = next;
+    renderAppointments();
+    renderMetrics();
+    renderLeaderboard();
+  }
+
+  // ---- CSV EXPORT ----
+  function csvEscape(value) {
+    if (value == null) return "";
+    const str = String(value).replace(/"/g, '""');
+    if (/[";,\\n]/.test(str)) return `"${str}"`;
+    return str;
+  }
+
+  function exportCsv() {
+    const subset = applyFilters(appointments);
+    if (!subset.length) {
+      alert("No appointments in current view to export.");
+      return;
+    }
+
+    const headers = [
+      "Customer",
+      "Date",
+      "Time",
+      "Sales Person",
+      "Business Manager",
+      "Department",
+      "Vehicle",
+      "Stock Number",
+      "Show",
+      "Test Drive",
+      "Sold",
+      "Deal Number",
+      "Comments"
+    ];
+
+    const rows = subset.map(a => [
+      a.customer_name || "",
+      a.appt_date || "",
+      a.appt_time || "",
+      a.sales_person || "",
+      a.business_manager || "",
+      a.department || "",
+      a.vehicle_interest || "",
+      a.stock_number || "",
+      a.appt_show === true ? "Y" : a.appt_show === false ? "N" : "Pending",
+      a.test_drive === true ? "Y" : a.test_drive === false ? "N" : "Pending",
+      a.sold === true ? "Y" : a.sold === false ? "N" : "Pending",
+      a.deal_number || "",
+      a.comments || ""
+    ]);
+
+    const csv = [
+      headers.join(","),
+      ...rows.map(r => r.map(csvEscape).join(","))
+    ].join("\r\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "appointments_" + new Date().toISOString().slice(0, 10) + ".csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // ---- WTD EMAIL SNAPSHOT ----
+  function emailWeekSnapshot() {
+    const range = getWeekRange(new Date());
+    const subset = appointments.filter(
+      a =>
+        a.appt_date &&
+        a.appt_date >= range.start &&
+        a.appt_date <= range.end
+    );
+
+    if (!subset.length) {
+      alert("No appointments for this week yet.");
+      return;
+    }
+
+    const bySales = {};
+    subset.forEach(a => {
+      const name = a.sales_person || "Unknown";
+      if (!bySales[name]) bySales[name] = { appts: 0, shown: 0, td: 0, sold: 0 };
+      const s = bySales[name];
+      s.appts++;
+      if (a.appt_show === true) s.shown++;
+      if (a.test_drive === true) s.td++;
+      if (a.sold === true) s.sold++;
+    });
+
+    let lines = [];
+    lines.push(`Blackburn WTD Appointment Snapshot`);
+    lines.push(`Week: ${range.start} to ${range.end}`);
+    lines.push("");
+
+    let totalAppts = subset.length;
+    let totalShown = subset.filter(a => a.appt_show === true).length;
+    let totalTd = subset.filter(a => a.test_drive === true).length;
+    let totalSold = subset.filter(a => a.sold === true).length;
+
+    lines.push(`Total Appointments: ${totalAppts}`);
+    lines.push(`Shown: ${totalShown}`);
+    lines.push(`Test Drives: ${totalTd}`);
+    lines.push(`Sold: ${totalSold}`);
+    lines.push("");
+
+    lines.push(`Per Salesperson (target 4 appts):`);
+    Object.entries(bySales).forEach(([name, s]) => {
+      lines.push(
+        `${name}: ${s.appts} appts (target 4) | Shown ${s.shown} | TD ${s.td} | Sold ${s.sold}`
+      );
+    });
+
+    const subject = encodeURIComponent("Blackburn WTD Appointment Snapshot");
+    const body = encodeURIComponent(lines.join("\n"));
+
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  }
+
   // ---- EVENTS ----
   document.addEventListener("DOMContentLoaded", () => {
+    initMonthSelector();
+
     // FAB
     document.getElementById("addBtn").onclick = () => openApptModal(null);
 
-    // Settings + Leaderboard
+    // Settings & Leaderboard panels
     document.getElementById("openSettings").onclick = () =>
       panelSettings.classList.add("open");
     document.getElementById("closeSettings").onclick = () =>
@@ -979,13 +1287,68 @@
       deleteAppointment();
     };
 
+    // List click handling (quick actions vs open modal)
+    listEl.addEventListener("click", e => {
+      const quickBtn = e.target.closest(".quick-btn-action");
+      if (quickBtn) {
+        const id = quickBtn.getAttribute("data-id");
+        const field = quickBtn.getAttribute("data-field");
+        handleQuickAction(id, field);
+        e.stopPropagation();
+        return;
+      }
+
+      const card = e.target.closest(".appt-card");
+      if (!card) return;
+      const id = card.getAttribute("data-id");
+      const appt = appointments.find(a => String(a.id) === String(id));
+      if (appt) openApptModal(appt);
+    });
+
     // Filters
     const rerenderAll = () => {
       renderAppointments();
       renderMetrics();
       renderLeaderboard();
     };
-    filterDateEl.onchange = rerenderAll;
+
+    filterMonthEl.onchange = () => {
+      currentView = "month";
+      currentMonthValue = filterMonthEl.value;
+      currentDay = null;
+      filterDateEl.value = "";
+      btnWeekEl.classList.remove("active");
+      rerenderAll();
+    };
+
+    filterDateEl.onchange = () => {
+      const val = filterDateEl.value;
+      if (val) {
+        currentView = "day";
+        currentDay = val;
+        btnWeekEl.classList.remove("active");
+      } else {
+        currentView = "month";
+        currentDay = null;
+      }
+      rerenderAll();
+    };
+
+    btnWeekEl.onclick = () => {
+      if (currentView === "week" && btnWeekEl.classList.contains("active")) {
+        // toggle off -> back to month
+        currentView = "month";
+        btnWeekEl.classList.remove("active");
+      } else {
+        currentView = "week";
+        weekRange = getWeekRange(new Date());
+        btnWeekEl.classList.add("active");
+        filterDateEl.value = "";
+        currentDay = null;
+      }
+      rerenderAll();
+    };
+
     filterSalesEl.onchange = rerenderAll;
     filterDeptEl.onchange = rerenderAll;
 
@@ -995,7 +1358,11 @@
       document.getElementById("toggleMode").textContent = isLight ? "☀️" : "🌙";
     };
 
-    // INIT
+    // CSV and Email
+    btnExportCsv.onclick = exportCsv;
+    btnEmailSnapshot.onclick = emailWeekSnapshot;
+
+    // INIT LOAD
     (async () => {
       await loadAppointments();
       await loadSalesStaff();
@@ -1003,3 +1370,5 @@
     })();
   });
 </script>
+</body>
+</html>
