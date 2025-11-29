@@ -105,6 +105,31 @@
       justify-content: flex-end;
     }
 
+/* WEEK BUTTON DEFAULT (OFF) */
+#btnWeek {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* Hover effect when OFF */
+#btnWeek:hover {
+  background: rgba(14,165,233,0.12);
+  transform: translateY(-1px);
+}
+
+/* WHEN ON (GLOW MODE) — keep as you wrote */
+#btnWeek.glow {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(14,165,233,0.22);
+  box-shadow:
+    0 0 10px rgba(14,165,233,0.4),
+    0 0 18px rgba(14,165,233,0.25);
+  font-weight: 600;
+}
+
+
     .btn-icon {
       padding: 8px 10px;
       border-radius: 10px;
@@ -177,6 +202,8 @@
       font-size: 0.8rem;
       cursor: pointer;
       white-space: nowrap;
+transition: all 0.25s ease;
+
     }
 
     .filter-chip.active {
@@ -379,6 +406,13 @@
 
     <!-- FILTERS -->
     <div class="filters">
+<input 
+  type="text" 
+  id="filterSearch" 
+  class="filter-input" 
+  placeholder="Search name, phone, stock…" 
+  style="flex:1;" 
+/>
       <select id="filterMonth" class="filter-input"></select>
       <input type="date" id="filterDate" class="filter-input" />
       <button id="btnWeek" class="filter-chip">This Week</button>
@@ -552,6 +586,7 @@
   const listEl = document.getElementById("list");
   const metricsEl = document.getElementById("metrics");
 
+const filterSearchEl = document.getElementById("filterSearch");
   const filterMonthEl = document.getElementById("filterMonth");
   const filterDateEl = document.getElementById("filterDate");
   const filterSalesEl = document.getElementById("filterSales");
@@ -598,6 +633,7 @@
   let currentMonthValue = null; // 'YYYY-MM'
   let currentDay = null;        // 'YYYY-MM-DD'
   let weekRange = null;         // { start, end }
+let filterNoShows = false;
 
   // ---- UTIL ----
   function deptColour(dept) {
@@ -762,6 +798,29 @@
     const dept = filterDeptEl.value;
     if (s) res = res.filter(a => (a.sales_person || "") === s);
     if (dept) res = res.filter(a => (a.department || "") === dept);
+// SEARCH FILTER
+const q = filterSearchEl.value.trim().toLowerCase();
+if (q) {
+  res = res.filter(a => {
+    return (
+      (a.customer_name || "").toLowerCase().includes(q) ||
+      (a.phone || "").toLowerCase().includes(q) ||
+      (a.stock_number || "").toLowerCase().includes(q) ||
+      (a.vehicle_interest || "").toLowerCase().includes(q) ||
+      (a.deal_number || "").toLowerCase().includes(q) ||
+      (a.comments || "").toLowerCase().includes(q)
+    );
+  });
+}
+// No-Show filter (overdue + not shown)
+if (filterNoShows) {
+  const now = new Date();
+  res = res.filter(a => {
+    if (!a.appt_date || !a.appt_time) return false;
+    const dt = new Date(a.appt_date + "T" + a.appt_time);
+    return dt < now && a.appt_show !== true;
+  });
+}
 
     return res;
   }
@@ -830,32 +889,64 @@
       .join("");
   }
 
-  function renderMetrics() {
-    const subset = applyFilters(appointments);
-    const total = subset.length;
-    const shown = subset.filter(a => a.appt_show === true).length;
-    const tds = subset.filter(a => a.test_drive === true).length;
-    const sold = subset.filter(a => a.sold === true).length;
+function countNoShows(list) {
+  const now = new Date();
+  return list.filter(a => {
+    if (!a.appt_date || !a.appt_time) return false;
+    const dt = new Date(a.appt_date + "T" + a.appt_time);
+    return dt < now && a.appt_show !== true; // not shown & overdue
+  }).length;
+}
 
-    metricsEl.innerHTML = `
-      <div class="metric-card">
-        <div class="metric-title">Appointments</div>
-        <div class="metric-value">${total}</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-title">Shown</div>
-        <div class="metric-value">${shown}</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-title">Test Drives</div>
-        <div class="metric-value">${tds}</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-title">Sold</div>
-        <div class="metric-value">${sold}</div>
-      </div>
-    `;
-  }
+  function renderMetrics() {
+  const subset = applyFilters(appointments);
+  const total = subset.length;
+  const shown = subset.filter(a => a.appt_show === true).length;
+  const tds = subset.filter(a => a.test_drive === true).length;
+  const sold = subset.filter(a => a.sold === true).length;
+
+  const noShows = countNoShows(subset);
+
+  metricsEl.innerHTML = `
+  <div class="metric-card">
+    <div class="metric-title">Appointments</div>
+    <div class="metric-value">${total}</div>
+  </div>
+
+  <div class="metric-card">
+    <div class="metric-title">Shown</div>
+    <div class="metric-value">${shown}</div>
+  </div>
+
+  <div class="metric-card">
+    <div class="metric-title">Test Drives</div>
+    <div class="metric-value">${tds}</div>
+  </div>
+
+  <div class="metric-card">
+    <div class="metric-title">Sold</div>
+    <div class="metric-value">${sold}</div>
+  </div>
+
+ <div class="metric-card"
+     id="metricNoShows"
+     style="
+        cursor:pointer;
+        border-color:${noShows>0?'var(--danger)':'var(--border)'};
+        background:${noShows>0?'rgba(239,68,68,0.15)':'var(--card)'};
+     ">
+  <div class="metric-title"
+       style="color:${noShows>0?'var(--danger)':'var(--muted)'};">
+    No Shows / Overdue
+  </div>
+  <div class="metric-value"
+       style="color:${noShows>0?'var(--danger)':'var(--muted)'};">
+    ${noShows}
+  </div>
+</div>
+`;
+}
+
 
   function renderLeaderboard() {
     const subset = applyFilters(appointments);
@@ -1258,6 +1349,25 @@
   // ---- EVENTS ----
   document.addEventListener("DOMContentLoaded", () => {
     initMonthSelector();
+document.addEventListener("click", e => {
+  const noShowTile = e.target.closest("#metricNoShows");
+  if (noShowTile) {
+    filterNoShows = !filterNoShows;
+
+    // glow effect to indicate filtering ON
+    if (filterNoShows) {
+      noShowTile.style.boxShadow = "0 0 12px rgba(239,68,68,0.5)";
+      noShowTile.style.transform = "scale(1.02)";
+    } else {
+      noShowTile.style.boxShadow = "none";
+      noShowTile.style.transform = "scale(1)";
+    }
+
+    renderAppointments();
+    renderMetrics();  // re-renders tile rewritten
+    renderLeaderboard();
+  }
+});
 
     // FAB
     document.getElementById("addBtn").onclick = () => openApptModal(null);
@@ -1334,23 +1444,31 @@
       rerenderAll();
     };
 
-    btnWeekEl.onclick = () => {
-      if (currentView === "week" && btnWeekEl.classList.contains("active")) {
-        // toggle off -> back to month
-        currentView = "month";
-        btnWeekEl.classList.remove("active");
-      } else {
-        currentView = "week";
-        weekRange = getWeekRange(new Date());
-        btnWeekEl.classList.add("active");
-        filterDateEl.value = "";
-        currentDay = null;
-      }
-      rerenderAll();
-    };
+   btnWeekEl.onclick = () => {
+  if (btnWeekEl.classList.contains("glow")) {
+    // Turn OFF → revert to month
+    btnWeekEl.classList.remove("glow");
+    currentView = "month";
+  } else {
+    // Turn ON → week mode
+    btnWeekEl.classList.add("glow");
+    currentView = "week";
+    weekRange = getWeekRange(new Date());
+    filterDateEl.value = "";
+    currentDay = null;
+  }
 
-    filterSalesEl.onchange = rerenderAll;
-    filterDeptEl.onchange = rerenderAll;
+  renderAppointments();
+  renderMetrics();
+  renderLeaderboard();
+};
+
+// Search filter
+filterSearchEl.oninput = () => {
+  renderAppointments();
+  renderMetrics();
+  renderLeaderboard();
+};
 
     // Dark / Light toggle
     document.getElementById("toggleMode").onclick = () => {
