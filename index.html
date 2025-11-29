@@ -5,13 +5,8 @@
   <title>Blackburn Appointment Tracker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Prevent Caching -->
-  <meta http-equiv="Cache-Control" content="no-store" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-
-  <!-- Supabase (forced fresh version) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2?v=20250307"></script>
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     :root {
@@ -32,7 +27,8 @@
       --used: #ff6d00;
     }
 
-    .light {
+    /* Light Mode ------------------------------------------------ */
+    body.light {
       --bg: #f2f4f8;
       --card: #ffffff;
       --card-alt: #ffffff;
@@ -42,16 +38,21 @@
       --accent: #2563eb;
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
+      min-height: 100vh;
       background: var(--bg);
       color: var(--text);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       display: flex;
       justify-content: center;
       padding: 16px;
+      overflow-x: hidden;
       transition: background 0.3s ease, color 0.3s ease;
     }
 
@@ -64,13 +65,15 @@
       padding: 18px;
       box-shadow: 0 18px 50px rgba(0,0,0,0.5);
       position: relative;
+      overflow: hidden;
     }
 
+    /* Header ----------------------------------------------------- */
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     .title {
@@ -79,11 +82,12 @@
     }
 
     .badge {
-      background: rgba(56,189,248,0.15);
-      color: var(--accent);
+      font-size: 0.7rem;
       padding: 4px 8px;
       border-radius: 999px;
-      font-size: 0.75rem;
+      background: rgba(56,189,248,0.15);
+      color: var(--accent);
+      margin-left: 6px;
     }
 
     .header-actions {
@@ -93,15 +97,15 @@
 
     .btn-icon {
       padding: 8px 12px;
-      background: var(--card);
-      border: 1px solid var(--border);
       border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--card);
       color: var(--text);
       cursor: pointer;
       font-size: 0.85rem;
     }
 
-    /* METRICS */
+    /* Metrics ---------------------------------------------------- */
     .metrics {
       display: flex;
       gap: 12px;
@@ -129,33 +133,36 @@
       margin-top: 4px;
     }
 
-    /* FILTERS */
+    /* Filters ---------------------------------------------------- */
     .filters {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin: 14px 0;
+      margin: 16px 0;
     }
 
-    .filter-input, select {
+    .filter-input,
+    select {
       border-radius: 10px;
       border: 1px solid var(--border);
       background: var(--card);
       color: var(--text);
       padding: 7px 10px;
+      width: 100%;
     }
 
+    /* Fix dropdown contrast */
     select option {
-      background: #fff;
       color: #000 !important;
+      background: #fff !important;
     }
 
-    /* APPOINTMENT CARDS */
+    /* Appointment Cards ----------------------------------------- */
     .appt-card {
       display: flex;
       background: var(--card);
-      border: 1px solid var(--border);
       border-radius: 16px;
+      border: 1px solid var(--border);
       margin-bottom: 12px;
       cursor: pointer;
       transition: 0.15s ease;
@@ -172,7 +179,7 @@
     }
 
     .appt-body {
-      padding: 12px;
+      padding: 10px 12px;
       flex: 1;
     }
 
@@ -187,42 +194,52 @@
       margin-top: 4px;
     }
 
+    /* Status colours */
     .sold { background: rgba(34,197,94,0.15); }
     .shown { background: rgba(251,191,36,0.15); }
     .overdue { background: rgba(239,68,68,0.15); }
 
-    /* Floating Add Button */
+    /* FAB */
     .fab {
       position: fixed;
       bottom: 20px;
       right: 20px;
-      background: linear-gradient(135deg,#22c55e,#4ade80);
+      background: linear-gradient(135deg, #22c55e, #4ade80);
       padding: 12px 22px;
       border-radius: 999px;
-      color: white;
+      color: #fff;
       font-weight: 600;
       cursor: pointer;
-      z-index: 3000;
     }
 
-    /* Panels */
+    /* Slide Panels ------------------------------------------------ */
     .panel {
       position: fixed;
       top: 0;
       right: -100%;
-      width: 80%;
-      max-width: 440px;
+      width: 100%;
+      max-width: 480px;
       height: 100vh;
       background: var(--card-alt);
       border-left: 1px solid var(--border);
-      padding: 20px;
-      transition: 0.35s ease;
-      overflow-y: auto;
-      z-index: 2000;
+      box-shadow: -10px 0 40px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      transition: right 0.35s ease;
+      z-index: 100;
     }
 
     .panel.open {
       right: 0;
+    }
+
+    /* Panel content scroll */
+    .panel .content {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 10px;
+      padding-bottom: 120px; /* space for footer */
     }
 
     .panel-title {
@@ -236,20 +253,30 @@
       border-bottom: 1px solid var(--border);
     }
 
+    /* Sticky footer */
+    .panel .footer {
+      position: sticky;
+      bottom: 0;
+      background: var(--card-alt);
+      padding: 14px 10px;
+      border-top: 1px solid var(--border);
+    }
+
     .close-panel {
-      margin-top: 14px;
       padding: 8px 14px;
       border: 1px solid var(--border);
       background: var(--card);
       border-radius: 10px;
       cursor: pointer;
+      width: 100%;
+      text-align: center;
     }
+
   </style>
 </head>
-
 <body id="body">
-  <div class="shell">
 
+  <div class="shell">
     <!-- HEADER -->
     <div class="header">
       <div>
@@ -265,7 +292,7 @@
     </div>
 
     <!-- METRICS -->
-    <div id="metrics" class="metrics"></div>
+    <div class="metrics" id="metrics"></div>
 
     <!-- FILTERS -->
     <div class="filters">
@@ -280,653 +307,699 @@
       </select>
     </div>
 
+    <!-- LIST -->
     <div id="list"></div>
 
+    <!-- FAB -->
     <button class="fab" id="addBtn">＋ New Appointment</button>
   </div>
 
-  <!-- SETTINGS -->
+  <!-- SETTINGS PANEL -->
   <div class="panel" id="panelSettings">
-    <div class="panel-title">Settings</div>
-    <h3>Sales Staff</h3>
-    <div id="salesList"></div>
+    <div class="content">
+      <div class="panel-title">Settings</div>
 
-    <h3 style="margin-top:20px;">Business Managers</h3>
-    <div id="bmList"></div>
+      <h3>Sales Staff</h3>
+      <div id="salesList"></div>
 
-    <button class="close-panel" id="closeSettings">Close</button>
-  </div>
+      <h3 style="margin-top:20px;">Business Managers</h3>
+      <div id="bmList"></div>
 
-  <!-- LEADERBOARD -->
-  <div class="panel" id="panelLeaderboard">
-    <div class="panel-title">Leaderboard</div>
-    <div id="leaderboard"></div>
-    <button class="close-panel" id="closeLeaderboard">Close</button>
-  </div>
-
-  <!-- APPOINTMENT MODAL -->
-  <div class="panel" id="panelAppt" style="max-width:480px;">
-    <div class="panel-title" id="apptPanelTitle">New Appointment</div>
-
-    <form id="formAppt">
-      <input type="hidden" id="apptId" />
-
-      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Customer</div><input id="customer" class="filter-input" required /></div>
-      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Phone</div><input id="phone" class="filter-input" /></div>
-
-      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Sales Person</div>
-        <input id="sales" class="filter-input" list="salesDatalist" required />
-        <datalist id="salesDatalist"></datalist>
-      </div>
-
-      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Business Manager</div>
-        <input id="bm" class="filter-input" list="bmDatalist" />
-        <datalist id="bmDatalist"></datalist>
-      </div>
-
-      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Department</div>
-        <select id="dept" class="filter-input" required>
-          <option value="">Select…</option>
-          <option value="Kia New">Kia New</option>
-          <option value="Nissan New">Nissan New</option>
-          <option value="GWM New">GWM New</option>
-          <option value="Used Cars">Used Cars</option>
-        </select>
-      </div>
-
-      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Vehicle Interest</div>
-        <input id="vehicle" class="filter-input" />
-      </div>
-
-      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Stock #</div>
-        <input id="stock" class="filter-input" />
-      </div>
-
-      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Date</div>
-        <input type="date" id="date" class="filter-input" required />
-      </div>
-
-      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Time</div>
-        <input type="time" id="time" class="filter-input" required />
-      </div>
-
-      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Show</div>
-        <select id="show" class="filter-input">
-          <option value="pending">Pending</option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        </select>
-      </div>
-
-      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Test Drive</div>
-        <select id="td" class="filter-input">
-          <option value="pending">Pending</option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        </select>
-      </div>
-
-      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Sold</div>
-        <select id="sold" class="filter-input">
-          <option value="pending">Pending</option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        </select>
-      </div>
-
-      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Deal #</div>
-        <input id="deal" class="filter-input" />
-      </div>
-
-      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Comments</div>
-        <textarea id="comments" class="filter-input" style="min-height:70px;"></textarea>
-      </div>
-    </form>
-
-    <div style="display:flex;gap:8px;margin-top:12px;">
-      <button class="close-panel" id="deleteAppt" style="border-color:var(--danger);color:var(--danger);flex:1;">Delete</button>
-      <button class="close-panel" id="cancelAppt" style="flex:1;">Cancel</button>
-      <button class="close-panel" id="saveAppt" style="flex:1;border-color:var(--accent);color:var(--accent);">Save</button>
+      <button class="close-panel" id="closeSettings">Close</button>
     </div>
   </div>
-<script id="apptScript">
-/* ---------------------------------------------------------
-   CONFIG
---------------------------------------------------------- */
-const SUPABASE_URL = "https://tfelmjnmedfeplcueevu.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmZWxtam5tZWRmZXBsY3VlZXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzMDE0OTMsImV4cCI6MjA3OTg3NzQ5M30.UFv00DEM570CxeFKAUV6LH424joWo3CDTuHhyIbuh80";
 
-const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <!-- LEADERBOARD PANEL -->
+  <div class="panel" id="panelLeaderboard">
+    <div class="content">
+      <div class="panel-title">Appointment Leaderboard</div>
+      <div id="leaderboard"></div>
+      <button class="close-panel" id="closeLeaderboard">Close</button>
+    </div>
+  </div>
 
-/* ---------------------------------------------------------
-   DOM REFERENCES
---------------------------------------------------------- */
-const bodyEl = document.getElementById("body");
-const listEl = document.getElementById("list");
-const metricsEl = document.getElementById("metrics");
+  <!-- APPOINTMENT PANEL -->
+  <div class="panel" id="panelAppt">
+    <div class="content">
+      <div class="panel-title" id="apptPanelTitle">New Appointment</div>
 
-const filterDateEl = document.getElementById("filterDate");
-const filterSalesEl = document.getElementById("filterSales");
-const filterDeptEl = document.getElementById("filterDept");
+      <form id="formAppt">
+        <input type="hidden" id="apptId" />
 
-const panelSettings = document.getElementById("panelSettings");
-const panelLeaderboard = document.getElementById("panelLeaderboard");
-const panelAppt = document.getElementById("panelAppt");
+        <div class="list-item">
+          <div class="field-label">Customer</div>
+          <input id="customer" class="filter-input" required />
+        </div>
 
-const salesListEl = document.getElementById("salesList");
-const bmListEl = document.getElementById("bmList");
-const leaderboardEl = document.getElementById("leaderboard");
+        <div class="list-item">
+          <div class="field-label">Phone</div>
+          <input id="phone" class="filter-input" />
+        </div>
 
-const apptIdEl = document.getElementById("apptId");
-const customerEl = document.getElementById("customer");
-const phoneEl = document.getElementById("phone");
-const salesEl = document.getElementById("sales");
-const bmEl = document.getElementById("bm");
-const deptEl = document.getElementById("dept");
-const vehicleEl = document.getElementById("vehicle");
-const stockEl = document.getElementById("stock");
-const dateEl = document.getElementById("date");
-const timeEl = document.getElementById("time");
-const showEl = document.getElementById("show");
-const tdEl = document.getElementById("td");
-const soldEl = document.getElementById("sold");
-const dealEl = document.getElementById("deal");
-const commentsEl = document.getElementById("comments");
-const apptPanelTitle = document.getElementById("apptPanelTitle");
+        <div class="list-item">
+          <div class="field-label">Sales Person</div>
+          <input id="sales" list="salesDatalist" class="filter-input" required />
+          <datalist id="salesDatalist"></datalist>
+        </div>
 
-const salesDatalist = document.getElementById("salesDatalist");
-const bmDatalist = document.getElementById("bmDatalist");
+        <div class="list-item">
+          <div class="field-label">Business Manager</div>
+          <input id="bm" list="bmDatalist" class="filter-input" />
+          <datalist id="bmDatalist"></datalist>
+        </div>
 
-/* ---------------------------------------------------------
-   STATE
---------------------------------------------------------- */
-let appointments = [];
-let salesStaff = [];
-let businessManagers = [];
+        <div class="list-item">
+          <div class="field-label">Department</div>
+          <select id="dept" class="filter-input" required>
+            <option value="">Select…</option>
+            <option>Kia New</option>
+            <option>Nissan New</option>
+            <option>GWM New</option>
+            <option>Used Cars</option>
+          </select>
+        </div>
 
-/* ---------------------------------------------------------
-   UTILITY FUNCTIONS
---------------------------------------------------------- */
-function deptColour(dept) {
-  if (!dept) return "#4b5563";
-  const d = dept.toLowerCase();
-  const root = getComputedStyle(document.documentElement);
+        <div class="list-item">
+          <div class="field-label">Vehicle of Interest</div>
+          <input id="vehicle" class="filter-input" />
+        </div>
 
-  if (d.includes("kia")) return root.getPropertyValue("--kia");
-  if (d.includes("nissan")) return root.getPropertyValue("--nissan");
-  if (d.includes("gwm")) return root.getPropertyValue("--gwm");
-  if (d.includes("used")) return root.getPropertyValue("--used");
+        <div class="list-item">
+          <div class="field-label">Stock #</div>
+          <input id="stock" class="filter-input" />
+        </div>
 
-  return "#4b5563";
-}
+        <div class="list-item">
+          <div class="field-label">Date</div>
+          <input type="date" id="date" class="filter-input" required />
+        </div>
 
-function boolFromSelect(val) {
-  if (val === "yes") return true;
-  if (val === "no") return false;
-  return null;
-}
+        <div class="list-item">
+          <div class="field-label">Time</div>
+          <input type="time" id="time" class="filter-input" required />
+        </div>
 
-function selectFromBool(v) {
-  if (v === true) return "yes";
-  if (v === false) return "no";
-  return "pending";
-}
+        <div class="list-item">
+          <div class="field-label">Show</div>
+          <select id="show" class="filter-input">
+            <option value="pending">Pending</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
 
-function statusClass(appt) {
-  const now = new Date();
-  const dt = appt.appt_date
-    ? new Date(appt.appt_date + "T" + (appt.appt_time || "00:00"))
-    : null;
+        <div class="list-item">
+          <div class="field-label">Test Drive</div>
+          <select id="td" class="filter-input">
+            <option value="pending">Pending</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
 
-  if (appt.sold === true) return "sold";
-  if (appt.appt_show === true) return "shown";
-  if (dt && dt < now) return "overdue";
-  return "";
-}
+        <div class="list-item">
+          <div class="field-label">Sold</div>
+          <select id="sold" class="filter-input">
+            <option value="pending">Pending</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
 
-function withinMTD(appt, ref = new Date()) {
-  if (!appt.appt_date) return false;
-  const d = new Date(appt.appt_date);
-  return (
-    d.getMonth() === ref.getMonth() &&
-    d.getFullYear() === ref.getFullYear()
-  );
-}
+        <div class="list-item">
+          <div class="field-label">Deal #</div>
+          <input id="deal" class="filter-input" />
+        </div>
 
-/* ---------------------------------------------------------
-   LOAD DATA FROM SUPABASE
---------------------------------------------------------- */
-async function loadAppointments() {
-  const { data, error } = await supa.from("appointments").select("*");
+        <div class="list-item">
+          <div class="field-label">Comments</div>
+          <textarea id="comments" class="filter-input" style="min-height:80px;"></textarea>
+        </div>
+      </form>
+    </div>
 
-  if (error) {
-    console.error("Error loading appointments", error);
-    return;
+    <div class="footer">
+      <div style="display:flex;gap:8px;">
+        <button class="close-panel" id="deleteAppt" style="border-color:var(--danger);color:var(--danger);">Delete</button>
+        <button class="close-panel" id="cancelAppt">Cancel</button>
+        <button class="close-panel" id="saveAppt" style="border-color:var(--accent);color:var(--accent);">Save</button>
+      </div>
+    </div>
+  </div>
+<script>
+  // ---- CONFIG ----
+  const SUPABASE_URL = "https://tfelmjnmedfeplcueevu.supabase.co";
+  const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmZWxtam5tZWRmZXBsY3VlZXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzMDE0OTMsImV4cCI6MjA3OTg3NzQ5M30.UFv00DEM570CxeFKAUV6LH424joWo3CDTuHhyIbuh80";
+
+  const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ---- DOM ----
+  const bodyEl = document.getElementById("body");
+  const listEl = document.getElementById("list");
+  const metricsEl = document.getElementById("metrics");
+
+  const filterDateEl = document.getElementById("filterDate");
+  const filterSalesEl = document.getElementById("filterSales");
+  const filterDeptEl = document.getElementById("filterDept");
+
+  const panelSettings = document.getElementById("panelSettings");
+  const panelLeaderboard = document.getElementById("panelLeaderboard");
+  const panelAppt = document.getElementById("panelAppt");
+
+  const salesListEl = document.getElementById("salesList");
+  const bmListEl = document.getElementById("bmList");
+  const leaderboardEl = document.getElementById("leaderboard");
+
+  const apptIdEl = document.getElementById("apptId");
+  const customerEl = document.getElementById("customer");
+  const phoneEl = document.getElementById("phone");
+  const salesEl = document.getElementById("sales");
+  const bmEl = document.getElementById("bm");
+  const deptEl = document.getElementById("dept");
+  const vehicleEl = document.getElementById("vehicle");
+  const stockEl = document.getElementById("stock");
+  const dateEl = document.getElementById("date");
+  const timeEl = document.getElementById("time");
+  const showEl = document.getElementById("show");
+  const tdEl = document.getElementById("td");
+  const soldEl = document.getElementById("sold");
+  const dealEl = document.getElementById("deal");
+  const commentsEl = document.getElementById("comments");
+  const apptPanelTitle = document.getElementById("apptPanelTitle");
+
+  const salesDatalist = document.getElementById("salesDatalist");
+  const bmDatalist = document.getElementById("bmDatalist");
+
+  // ---- STATE ----
+  let appointments = [];
+  let salesStaff = [];
+  let businessManagers = [];
+
+  // ---- UTIL ----
+  function deptColour(dept) {
+    if (!dept) return "#4b5563";
+    const d = dept.toLowerCase();
+    const root = getComputedStyle(document.documentElement);
+    if (d.includes("kia")) return root.getPropertyValue("--kia");
+    if (d.includes("nissan")) return root.getPropertyValue("--nissan");
+    if (d.includes("gwm")) return root.getPropertyValue("--gwm");
+    if (d.includes("used")) return root.getPropertyValue("--used");
+    return "#4b5563";
   }
 
-  appointments = data || [];
+  function boolFromSelect(val) {
+    if (val === "yes") return true;
+    if (val === "no") return false;
+    return null;
+  }
 
-  appointments.sort((a, b) => {
-    const da = new Date((a.appt_date || "1970-01-01") + "T" + (a.appt_time || "00:00"));
-    const db = new Date((b.appt_date || "1970-01-01") + "T" + (b.appt_time || "00:00"));
-    return da - db;
-  });
+  function selectFromBool(v) {
+    if (v === true) return "yes";
+    if (v === false) return "no";
+    return "pending";
+  }
 
-  renderFilters();
-  renderAppointments();
-  renderMetrics();
-  renderLeaderboard();
-}
+  function statusClass(appt) {
+    const now = new Date();
+    const dt = appt.appt_date
+      ? new Date(appt.appt_date + "T" + (appt.appt_time || "00:00"))
+      : null;
 
-async function loadSalesStaff() {
-  const { data, error } = await supa.from("sales_staff").select("*").order("name");
-  if (!error) {
+    if (appt.sold === true) return "sold";
+    if (appt.appt_show === true) return "shown";
+    if (dt && dt < now) return "overdue";
+    return "";
+  }
+
+  function withinMTD(appt, ref = new Date()) {
+    if (!appt.appt_date) return false;
+    const d = new Date(appt.appt_date);
+    return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth();
+  }
+
+  function lockBodyScroll(lock) {
+    document.body.style.overflow = lock ? "hidden" : "";
+  }
+
+  // ---- LOAD DATA ----
+  async function loadAppointments() {
+    const { data, error } = await supa.from("appointments").select("*");
+    if (error) {
+      console.error("Load appointments error", error);
+      listEl.innerHTML =
+        "<div style='padding:16px;color:var(--danger);'>Error loading appointments.</div>";
+      return;
+    }
+
+    appointments = data || [];
+    appointments.sort((a, b) => {
+      const da = new Date((a.appt_date || "1970-01-01") + "T" + (a.appt_time || "00:00"));
+      const db = new Date((b.appt_date || "1970-01-01") + "T" + (b.appt_time || "00:00"));
+      return da - db;
+    });
+
+    renderFilters();
+    renderAppointments();
+    renderMetrics();
+    renderLeaderboard();
+  }
+
+  async function loadSalesStaff() {
+    const { data, error } = await supa.from("sales_staff").select("*").order("name");
+    if (error) {
+      console.error("Load sales staff error", error);
+      return;
+    }
     salesStaff = data || [];
     renderSalesSettings();
     renderSalesDatalist();
   }
-}
 
-async function loadBusinessManagers() {
-  const { data, error } = await supa.from("business_managers").select("*").order("name");
-  if (!error) {
+  async function loadBusinessManagers() {
+    const { data, error } = await supa.from("business_managers").select("*").order("name");
+    if (error) {
+      console.error("Load business managers error", error);
+      return;
+    }
     businessManagers = data || [];
     renderBMSettings();
     renderBMDatalist();
   }
-}
 
-/* ---------------------------------------------------------
-   RENDER UI
---------------------------------------------------------- */
-function renderFilters() {
-  const names = new Set();
-  appointments.forEach(a => a.sales_person && names.add(a.sales_person));
-
-  filterSalesEl.innerHTML = "<option value=''>All Sales</option>";
-
-  [...names].sort().forEach(n => {
-    const opt = document.createElement("option");
-    opt.value = n;
-    opt.textContent = n;
-    filterSalesEl.appendChild(opt);
-  });
-}
-
-function applyFilters(list) {
-  let res = [...list];
-  const d = filterDateEl.value;
-  const s = filterSalesEl.value;
-  const dept = filterDeptEl.value;
-
-  if (d) res = res.filter(a => a.appt_date === d);
-  if (s) res = res.filter(a => a.sales_person === s);
-  if (dept) res = res.filter(a => a.department === dept);
-
-  return res;
-}
-
-function renderAppointments() {
-  const rows = applyFilters(appointments);
-
-  if (!rows.length) {
-    listEl.innerHTML =
-      "<div style='padding:16px;color:var(--muted);font-size:0.9rem;'>No appointments found.</div>";
-    return;
+  // ---- RENDER ----
+  function renderFilters() {
+    const names = new Set();
+    appointments.forEach(a => a.sales_person && names.add(a.sales_person));
+    filterSalesEl.innerHTML = "<option value=''>All Sales</option>";
+    [...names].sort().forEach(n => {
+      const opt = document.createElement("option");
+      opt.value = n;
+      opt.textContent = n;
+      filterSalesEl.appendChild(opt);
+    });
   }
 
-  listEl.innerHTML = rows
-    .map(a => {
-      const cls = statusClass(a);
-      const strip = deptColour(a.department);
+  function applyFilters(list) {
+    let res = [...list];
+    const d = filterDateEl.value;
+    const s = filterSalesEl.value;
+    const dept = filterDeptEl.value;
 
-      return `
-      <article class="appt-card ${cls}" data-id="${a.id}">
-        <div class="dept-strip" style="background:${strip};"></div>
-        <div class="appt-body">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div class="appt-name">${a.customer_name || ""}</div>
-            <div style="font-size:0.9rem;color:var(--accent);font-weight:600;">
-              ${a.appt_time || ""}
+    if (d) res = res.filter(a => a.appt_date === d);
+    if (s) res = res.filter(a => (a.sales_person || "") === s);
+    if (dept) res = res.filter(a => (a.department || "") === dept);
+
+    return res;
+  }
+
+  function renderAppointments() {
+    const filtered = applyFilters(appointments);
+
+    if (!filtered.length) {
+      listEl.innerHTML =
+        "<div style='padding:16px;color:var(--muted);font-size:0.9rem;'>No appointments found.</div>";
+      return;
+    }
+
+    listEl.innerHTML = filtered
+      .map(a => {
+        const cls = statusClass(a);
+        const strip = deptColour(a.department);
+        return `
+          <article class="appt-card ${cls}" data-id="${a.id}">
+            <div class="dept-strip" style="background:${strip};"></div>
+            <div class="appt-body">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div class="appt-name">${a.customer_name || ""}</div>
+                <div style="font-size:0.9rem;color:var(--accent);font-weight:600;">
+                  ${a.appt_time || ""}
+                </div>
+              </div>
+              <div class="appt-meta">
+                ${a.appt_date || ""} · ${a.sales_person || ""}${a.department ? " · " + a.department : ""}
+              </div>
+              <div class="appt-meta" style="margin-top:2px;">
+                ${a.vehicle_interest ? "· " + a.vehicle_interest : ""}
+                ${a.stock_number ? "· Stock " + a.stock_number : ""}
+                ${a.business_manager ? "· BM: " + a.business_manager : ""}
+                ${a.deal_number ? "· Deal " + a.deal_number : ""}
+              </div>
+              ${
+                a.comments
+                  ? `<div class="appt-meta" style="margin-top:4px;opacity:0.85;">${a.comments}</div>`
+                  : ""
+              }
+            </div>
+          </article>
+        `;
+      })
+      .join("");
+
+    // attach click handlers to cards after render
+    document.querySelectorAll(".appt-card").forEach(card => {
+      card.addEventListener("click", () => {
+        const id = card.getAttribute("data-id");
+        const appt = appointments.find(a => String(a.id) === String(id));
+        if (appt) openApptModal(appt);
+      });
+    });
+  }
+
+  function renderMetrics() {
+    const now = new Date();
+    const mtd = appointments.filter(a => withinMTD(a, now));
+
+    const total = mtd.length;
+    const shown = mtd.filter(a => a.appt_show === true).length;
+    const tds = mtd.filter(a => a.test_drive === true).length;
+    const sold = mtd.filter(a => a.sold === true).length;
+
+    metricsEl.innerHTML = `
+      <div class="metric-card">
+        <div class="metric-title">MTD Appointments</div>
+        <div class="metric-value">${total}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">Shown</div>
+        <div class="metric-value">${shown}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">Test Drives</div>
+        <div class="metric-value">${tds}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">Sold</div>
+        <div class="metric-value">${sold}</div>
+      </div>
+    `;
+  }
+
+  function renderLeaderboard() {
+    const now = new Date();
+    const mtd = appointments.filter(a => withinMTD(a, now));
+
+    const bySales = {};
+    mtd.forEach(a => {
+      const name = a.sales_person || "Unknown";
+      if (!bySales[name]) bySales[name] = { appts: 0, shown: 0, td: 0, sold: 0 };
+      const s = bySales[name];
+      s.appts++;
+      if (a.appt_show === true) s.shown++;
+      if (a.test_drive === true) s.td++;
+      if (a.sold === true) s.sold++;
+    });
+
+    const rows = Object.entries(bySales).sort(
+      (a, b) => b[1].sold - a[1].sold || b[1].appts - a[1].appts
+    );
+
+    if (!rows.length) {
+      leaderboardEl.innerHTML =
+        "<div style='color:var(--muted);font-size:0.9rem;'>No MTD data yet.</div>";
+      return;
+    }
+
+    leaderboardEl.innerHTML = rows
+      .map(([name, s], idx) => {
+        const shownPct = s.appts ? Math.round((s.shown / s.appts) * 100) : 0;
+        const tdPct = s.appts ? Math.round((s.td / s.appts) * 100) : 0;
+        const soldPct = s.appts ? Math.round((s.sold / s.appts) * 100) : 0;
+        return `
+          <div class="list-item">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div><strong>${idx + 1}. ${name}</strong></div>
+              <div style="font-size:0.8rem;color:var(--muted);">Appts: ${s.appts}</div>
+            </div>
+            <div style="font-size:0.8rem;color:var(--muted);margin-top:4px;">
+              Show: ${s.shown} (${shownPct}%) · TD: ${s.td} (${tdPct}%) · Sold: ${
+          s.sold
+        } (${soldPct}%)
             </div>
           </div>
-          <div class="appt-meta">
-            ${a.appt_date || ""} · ${a.sales_person || ""} · ${a.department || ""}
-          </div>
-          <div class="appt-meta" style="margin-top:2px;">
-            ${a.vehicle_interest ? "· " + a.vehicle_interest : ""}
-            ${a.stock_number ? "· Stock " + a.stock_number : ""}
-            ${a.business_manager ? "· BM: " + a.business_manager : ""}
-          </div>
-          <div class="appt-meta" style="margin-top:4px;">
-            ${a.comments || ""}
-          </div>
-        </div>
-      </article>`;
-    })
-    .join("");
-
-  /* ENSURE CLICK HANDLERS ARE ALWAYS ATTACHED */
-  document.querySelectorAll(".appt-card").forEach(card => {
-    card.addEventListener("click", () => {
-      const id = card.getAttribute("data-id");
-      const appt = appointments.find(a => a.id === id);
-      if (appt) openApptModal(appt);
-    });
-  });
-}
-
-function renderMetrics() {
-  const now = new Date();
-
-  const mtd = appointments.filter(a => withinMTD(a, now));
-  const total = mtd.length;
-  const shown = mtd.filter(a => a.appt_show === true).length;
-  const td = mtd.filter(a => a.test_drive === true).length;
-  const sold = mtd.filter(a => a.sold === true).length;
-
-  metricsEl.innerHTML = `
-    <div class="metric-card">
-      <div class="metric-title">MTD Appointments</div>
-      <div class="metric-value">${total}</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-title">Shown</div>
-      <div class="metric-value">${shown}</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-title">Test Drives</div>
-      <div class="metric-value">${td}</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-title">Sold</div>
-      <div class="metric-value">${sold}</div>
-    </div>
-  `;
-}
-
-function renderLeaderboard() {
-  const now = new Date();
-  const mtd = appointments.filter(a => withinMTD(a, now));
-
-  const bySales = {};
-
-  mtd.forEach(a => {
-    const name = a.sales_person || "Unknown";
-    if (!bySales[name]) bySales[name] = { appts: 0, shown: 0, td: 0, sold: 0 };
-    const s = bySales[name];
-
-    s.appts++;
-    if (a.appt_show === true) s.shown++;
-    if (a.test_drive === true) s.td++;
-    if (a.sold === true) s.sold++;
-  });
-
-  const rows = Object.entries(bySales).sort(
-    (a, b) => b[1].sold - a[1].sold || b[1].appts - a[1].appts
-  );
-
-  if (!rows.length) {
-    leaderboardEl.innerHTML =
-      "<div style='color:var(--muted);font-size:0.9rem;'>No MTD data yet.</div>";
-    return;
-  }
-
-  leaderboardEl.innerHTML = rows
-    .map(([name, s], i) => {
-      const pctShown = s.appts ? Math.round((s.shown / s.appts) * 100) : 0;
-      const pctTd = s.appts ? Math.round((s.td / s.appts) * 100) : 0;
-      const pctSold = s.appts ? Math.round((s.sold / s.appts) * 100) : 0;
-
-      return `
-      <div class="list-item">
-        <strong>${i + 1}. ${name}</strong> — Appts: ${s.appts}<br>
-        <span style="font-size:0.8rem;color:var(--muted);">
-          Show: ${s.shown} (${pctShown}%) ·
-          TD: ${s.td} (${pctTd}%) ·
-          Sold: ${s.sold} (${pctSold}%)
-        </span>
-      </div>`;
-    })
-    .join("");
-}
-
-function renderSalesSettings() {
-  if (!salesStaff.length) {
-    salesListEl.innerHTML =
-      "<div class='list-item' style='color:var(--muted);'>No sales staff yet.</div>";
-  } else {
-    salesListEl.innerHTML = salesStaff
-      .map(
-        s => `
-      <div class="list-item">
-        <strong>${s.name}</strong> ${s.active === false ? "(inactive)" : ""}
-        <div style="font-size:0.8rem;color:var(--muted);">${s.email || ""}</div>
-      </div>`
-      )
+        `;
+      })
       .join("");
   }
 
-  const block = document.createElement("div");
-  block.className = "list-item";
-  block.innerHTML = `
-    <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px;">Add Sales Staff</div>
-    <input id="newSalesName" class="filter-input" placeholder="Name" />
-    <input id="newSalesEmail" class="filter-input" placeholder="Email" style="margin-top:6px;" />
-    <button id="addSalesBtn" class="close-panel" style="margin-top:6px;">Add</button>
-  `;
-  salesListEl.appendChild(block);
+  function renderSalesSettings() {
+    if (!salesStaff.length) {
+      salesListEl.innerHTML =
+        "<div class='list-item' style='color:var(--muted);'>No sales staff yet.</div>";
+    } else {
+      salesListEl.innerHTML = salesStaff
+        .map(
+          s => `
+          <div class="list-item">
+            <div><strong>${s.name}</strong>${s.active === false ? " (inactive)" : ""}</div>
+            <div style="font-size:0.8rem;color:var(--muted);">${s.email || ""}</div>
+          </div>
+        `
+        )
+        .join("");
+    }
 
-  document.getElementById("addSalesBtn").onclick = async () => {
-    const name = document.getElementById("newSalesName").value.trim();
-    const email = document.getElementById("newSalesEmail").value.trim();
+    const addBlock = document.createElement("div");
+    addBlock.className = "list-item";
+    addBlock.innerHTML = `
+      <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px;">Add Sales Staff</div>
+      <input id="newSalesName" class="filter-input" placeholder="Name" />
+      <input id="newSalesEmail" class="filter-input" placeholder="Email" style="margin-top:6px;" />
+      <button id="addSalesBtn" class="close-panel" style="margin-top:6px;">Add</button>
+    `;
+    salesListEl.appendChild(addBlock);
 
-    if (!name) return alert("Name required");
+    document.getElementById("addSalesBtn").onclick = async () => {
+      const name = document.getElementById("newSalesName").value.trim();
+      const email = document.getElementById("newSalesEmail").value.trim();
+      if (!name) return alert("Name required");
+      const { error } = await supa.from("sales_staff").insert({ name, email, active: true });
+      if (error) {
+        console.error(error);
+        alert("Error adding staff");
+      } else {
+        await loadSalesStaff();
+      }
+    };
+  }
 
-    await supa.from("sales_staff").insert({ name, email, active: true });
-    await loadSalesStaff();
-  };
-}
+  function renderBMSettings() {
+    if (!businessManagers.length) {
+      bmListEl.innerHTML =
+        "<div class='list-item' style='color:var(--muted);'>No business managers yet.</div>";
+    } else {
+      bmListEl.innerHTML = businessManagers
+        .map(
+          s => `
+          <div class="list-item">
+            <div><strong>${s.name}</strong>${s.active === false ? " (inactive)" : ""}</div>
+            <div style="font-size:0.8rem;color:var(--muted);">${s.email || ""}</div>
+          </div>
+        `
+        )
+        .join("");
+    }
 
-function renderBMSettings() {
-  if (!businessManagers.length) {
-    bmListEl.innerHTML =
-      "<div class='list-item' style='color:var(--muted);'>No business managers yet.</div>";
-  } else {
-    bmListEl.innerHTML = businessManagers
-      .map(
-        s => `
-      <div class="list-item">
-        <strong>${s.name}</strong> ${s.active === false ? "(inactive)" : ""}
-        <div style="font-size:0.8rem;color:var(--muted);">${s.email || ""}</div>
-      </div>`
-      )
+    const addBlock = document.createElement("div");
+    addBlock.className = "list-item";
+    addBlock.innerHTML = `
+      <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px;">Add Business Manager</div>
+      <input id="newBmName" class="filter-input" placeholder="Name" />
+      <input id="newBmEmail" class="filter-input" placeholder="Email" style="margin-top:6px;" />
+      <button id="addBmBtn" class="close-panel" style="margin-top:6px;">Add</button>
+    `;
+    bmListEl.appendChild(addBlock);
+
+    document.getElementById("addBmBtn").onclick = async () => {
+      const name = document.getElementById("newBmName").value.trim();
+      const email = document.getElementById("newBmEmail").value.trim();
+      if (!name) return alert("Name required");
+      const { error } = await supa
+        .from("business_managers")
+        .insert({ name, email, active: true });
+      if (error) {
+        console.error(error);
+        alert("Error adding BM");
+      } else {
+        await loadBusinessManagers();
+      }
+    };
+  }
+
+  function renderSalesDatalist() {
+    salesDatalist.innerHTML = (salesStaff || [])
+      .map(s => `<option value="${s.name}">`)
       .join("");
   }
 
-  const block = document.createElement("div");
-  block.className = "list-item";
-  block.innerHTML = `
-    <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px;">Add Business Manager</div>
-    <input id="newBmName" class="filter-input" placeholder="Name" />
-    <input id="newBmEmail" class="filter-input" placeholder="Email" style="margin-top:6px;" />
-    <button id="addBmBtn" class="close-panel" style="margin-top:6px;">Add</button>
-  `;
-  bmListEl.appendChild(block);
-
-  document.getElementById("addBmBtn").onclick = async () => {
-    const name = document.getElementById("newBmName").value.trim();
-    const email = document.getElementById("newBmEmail").value.trim();
-
-    if (!name) return alert("Name required");
-
-    await supa.from("business_managers").insert({ name, email, active: true });
-    await loadBusinessManagers();
-  };
-}
-
-function renderSalesDatalist() {
-  salesDatalist.innerHTML = salesStaff
-    .map(s => `<option value="${s.name}">`)
-    .join("");
-}
-
-function renderBMDatalist() {
-  bmDatalist.innerHTML = businessManagers
-    .map(s => `<option value="${s.name}">`)
-    .join("");
-}
-
-/* ---------------------------------------------------------
-   MODAL LOGIC
---------------------------------------------------------- */
-function openApptModal(appt) {
-  if (appt) {
-    apptPanelTitle.textContent = "Edit Appointment";
-    apptIdEl.value = appt.id;
-
-    customerEl.value = appt.customer_name || "";
-    phoneEl.value = appt.phone || "";
-    salesEl.value = appt.sales_person || "";
-    bmEl.value = appt.business_manager || "";
-    deptEl.value = appt.department || "";
-    vehicleEl.value = appt.vehicle_interest || "";
-    stockEl.value = appt.stock_number || "";
-    dateEl.value = appt.appt_date || "";
-    timeEl.value = appt.appt_time || "";
-    showEl.value = selectFromBool(appt.appt_show);
-    tdEl.value = selectFromBool(appt.test_drive);
-    soldEl.value = selectFromBool(appt.sold);
-    dealEl.value = appt.deal_number || "";
-    commentsEl.value = appt.comments || "";
-  } else {
-    apptPanelTitle.textContent = "New Appointment";
-    apptIdEl.value = "";
-    customerEl.value = "";
-    phoneEl.value = "";
-    salesEl.value = "";
-    bmEl.value = "";
-    deptEl.value = "";
-    vehicleEl.value = "";
-    stockEl.value = "";
-    dateEl.value = new Date().toISOString().slice(0, 10);
-    timeEl.value = "";
-    showEl.value = "pending";
-    tdEl.value = "pending";
-    soldEl.value = "pending";
-    dealEl.value = "";
-    commentsEl.value = "";
+  function renderBMDatalist() {
+    bmDatalist.innerHTML = (businessManagers || [])
+      .map(s => `<option value="${s.name}">`)
+      .join("");
   }
 
-  panelAppt.classList.add("open");
-}
+  // ---- MODAL ----
+  function openApptModal(appt) {
+    lockBodyScroll(true);
 
-function closeApptModal() {
-  panelAppt.classList.remove("open");
-}
+    if (appt) {
+      apptPanelTitle.textContent = "Edit Appointment";
+      apptIdEl.value = appt.id || "";
+      customerEl.value = appt.customer_name || "";
+      phoneEl.value = appt.phone || "";
+      salesEl.value = appt.sales_person || "";
+      bmEl.value = appt.business_manager || "";
+      deptEl.value = appt.department || "";
+      vehicleEl.value = appt.vehicle_interest || "";
+      stockEl.value = appt.stock_number || "";
+      dateEl.value = appt.appt_date || "";
+      timeEl.value = appt.appt_time || "";
+      showEl.value = selectFromBool(appt.appt_show);
+      tdEl.value = selectFromBool(appt.test_drive);
+      soldEl.value = selectFromBool(appt.sold);
+      dealEl.value = appt.deal_number || "";
+      commentsEl.value = appt.comments || "";
+    } else {
+      apptPanelTitle.textContent = "New Appointment";
+      apptIdEl.value = "";
+      customerEl.value = "";
+      phoneEl.value = "";
+      salesEl.value = "";
+      bmEl.value = "";
+      deptEl.value = "";
+      vehicleEl.value = "";
+      stockEl.value = "";
+      dateEl.value = new Date().toISOString().slice(0, 10);
+      timeEl.value = "";
+      showEl.value = "pending";
+      tdEl.value = "pending";
+      soldEl.value = "pending";
+      dealEl.value = "";
+      commentsEl.value = "";
+    }
 
-/* ---------------------------------------------------------
-   SAVE / DELETE
---------------------------------------------------------- */
-async function saveAppointment() {
-  const payload = {
-    customer_name: customerEl.value.trim(),
-    phone: phoneEl.value.trim(),
-    sales_person: salesEl.value.trim(),
-    business_manager: bmEl.value.trim(),
-    department: deptEl.value || null,
-    vehicle_interest: vehicleEl.value.trim(),
-    stock_number: stockEl.value.trim(),
-    appt_date: dateEl.value || null,
-    appt_time: timeEl.value || null,
-    appt_show: boolFromSelect(showEl.value),
-    test_drive: boolFromSelect(tdEl.value),
-    sold: boolFromSelect(soldEl.value),
-    deal_number: dealEl.value.trim(),
-    comments: commentsEl.value.trim(),
-  };
-
-  if (!payload.customer_name) return alert("Customer name required");
-  if (!payload.sales_person) return alert("Sales person required");
-  if (!payload.department) return alert("Department required");
-  if (!payload.appt_date) return alert("Date required");
-  if (!payload.appt_time) return alert("Time required");
-
-  const id = apptIdEl.value;
-
-  if (id) {
-    await supa.from("appointments").update(payload).eq("id", id);
-  } else {
-    await supa.from("appointments").insert(payload);
+    panelAppt.classList.add("open");
   }
 
-  closeApptModal();
-  await loadAppointments();
-}
+  function closeApptModal() {
+    lockBodyScroll(false);
+    panelAppt.classList.remove("open");
+  }
 
-async function deleteAppointment() {
-  const id = apptIdEl.value;
-  if (!id) {
+  // ---- SAVE / DELETE ----
+  async function saveAppointment() {
+    const payload = {
+      customer_name: customerEl.value.trim(),
+      phone: phoneEl.value.trim(),
+      sales_person: salesEl.value.trim(),
+      business_manager: bmEl.value.trim(),
+      department: deptEl.value || null,
+      vehicle_interest: vehicleEl.value.trim(),
+      stock_number: stockEl.value.trim(),
+      appt_date: dateEl.value || null,
+      appt_time: timeEl.value || null,
+      appt_show: boolFromSelect(showEl.value),
+      test_drive: boolFromSelect(tdEl.value),
+      sold: boolFromSelect(soldEl.value),
+      deal_number: dealEl.value.trim(),
+      comments: commentsEl.value.trim()
+    };
+
+    if (!payload.customer_name) return alert("Customer name required");
+    if (!payload.sales_person) return alert("Sales person required");
+    if (!payload.department) return alert("Department required");
+    if (!payload.appt_date) return alert("Date required");
+    if (!payload.appt_time) return alert("Time required");
+
+    const id = apptIdEl.value;
+    let error;
+
+    if (id) {
+      ({ error } = await supa.from("appointments").update(payload).eq("id", id));
+    } else {
+      ({ error } = await supa.from("appointments").insert(payload));
+    }
+
+    if (error) {
+      console.error(error);
+      alert("Error saving appointment.");
+      return;
+    }
+
     closeApptModal();
-    return;
+    await loadAppointments();
   }
 
-  if (!confirm("Delete this appointment?")) return;
+  async function deleteAppointment() {
+    const id = apptIdEl.value;
+    if (!id) {
+      closeApptModal();
+      return;
+    }
+    if (!confirm("Delete this appointment?")) return;
 
-  await supa.from("appointments").delete().eq("id", id);
+    const { error } = await supa.from("appointments").delete().eq("id", id);
+    if (error) {
+      console.error(error);
+      alert("Error deleting appointment.");
+      return;
+    }
 
-  closeApptModal();
-  await loadAppointments();
-}
-
-/* ---------------------------------------------------------
-   EVENT BINDINGS — GITHUB SAFE
---------------------------------------------------------- */
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("addBtn").onclick = () => openApptModal(null);
-
-  document.getElementById("openSettings").onclick = () =>
-    panelSettings.classList.add("open");
-  document.getElementById("closeSettings").onclick = () =>
-    panelSettings.classList.remove("open");
-
-  document.getElementById("openLeaderboard").onclick = () =>
-    panelLeaderboard.classList.add("open");
-  document.getElementById("closeLeaderboard").onclick = () =>
-    panelLeaderboard.classList.remove("open");
-
-  document.getElementById("cancelAppt").onclick = () => closeApptModal();
-  document.getElementById("saveAppt").onclick = e => {
-    e.preventDefault();
-    saveAppointment();
-  };
-  document.getElementById("deleteAppt").onclick = e => {
-    e.preventDefault();
-    deleteAppointment();
-  };
-
-  /* Filters */
-  filterDateEl.onchange =
-    filterSalesEl.onchange =
-    filterDeptEl.onchange =
-      () => {
-        renderAppointments();
-        renderMetrics();
-        renderLeaderboard();
-      };
-
-  /* Light Mode */
-  document.getElementById("toggleMode").onclick = () => {
-    const isLight = bodyEl.classList.toggle("light");
-    document.getElementById("toggleMode").textContent = isLight ? "☀️" : "🌙";
-  };
-
-  /* INITIAL LOAD */
-  (async () => {
+    closeApptModal();
     await loadAppointments();
-    await loadSalesStaff();
-    await loadBusinessManagers();
-  })();
-});
+  }
+
+  // ---- EVENTS ----
+  document.addEventListener("DOMContentLoaded", () => {
+    // FAB
+    document.getElementById("addBtn").onclick = () => openApptModal(null);
+
+    // Settings + Leaderboard
+    document.getElementById("openSettings").onclick = () =>
+      panelSettings.classList.add("open");
+    document.getElementById("closeSettings").onclick = () =>
+      panelSettings.classList.remove("open");
+
+    document.getElementById("openLeaderboard").onclick = () =>
+      panelLeaderboard.classList.add("open");
+    document.getElementById("closeLeaderboard").onclick = () =>
+      panelLeaderboard.classList.remove("open");
+
+    // Appointment panel buttons
+    document.getElementById("cancelAppt").onclick = e => {
+      e.preventDefault();
+      closeApptModal();
+    };
+    document.getElementById("saveAppt").onclick = e => {
+      e.preventDefault();
+      saveAppointment();
+    };
+    document.getElementById("deleteAppt").onclick = e => {
+      e.preventDefault();
+      deleteAppointment();
+    };
+
+    // Filters
+    const rerenderAll = () => {
+      renderAppointments();
+      renderMetrics();
+      renderLeaderboard();
+    };
+    filterDateEl.onchange = rerenderAll;
+    filterSalesEl.onchange = rerenderAll;
+    filterDeptEl.onchange = rerenderAll;
+
+    // Dark / Light toggle
+    document.getElementById("toggleMode").onclick = () => {
+      const isLight = bodyEl.classList.toggle("light");
+      document.getElementById("toggleMode").textContent = isLight ? "☀️" : "🌙";
+    };
+
+    // INIT
+    (async () => {
+      await loadAppointments();
+      await loadSalesStaff();
+      await loadBusinessManagers();
+    })();
+  });
 </script>
