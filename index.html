@@ -3,10 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <title>Blackburn Appointment Tracker</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Prevent Caching -->
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <!-- Supabase (forced fresh version) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2?v=20250307"></script>
 
   <style>
     :root {
@@ -21,14 +26,12 @@
       --warning: #fbbf24;
       --success: #22c55e;
 
-      /* Departments */
       --kia: #ff008c;
       --nissan: #007aff;
       --gwm: #00e676;
       --used: #ff6d00;
     }
 
-    /* Light Mode */
     .light {
       --bg: #f2f4f8;
       --card: #ffffff;
@@ -39,18 +42,17 @@
       --accent: #2563eb;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      min-height: 100vh;
       background: var(--bg);
       color: var(--text);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       padding: 16px;
       transition: background 0.3s ease, color 0.3s ease;
-      overscroll-behavior: none;
     }
 
     .shell {
@@ -60,12 +62,10 @@
       border-radius: 24px;
       border: 1px solid var(--border);
       padding: 18px;
-      padding-bottom: 60px;
       box-shadow: 0 18px 50px rgba(0,0,0,0.5);
       position: relative;
     }
 
-    /* HEADER */
     .header {
       display: flex;
       justify-content: space-between;
@@ -74,16 +74,16 @@
     }
 
     .title {
-      font-size: 1.9rem;
-      font-weight: 800;
+      font-size: 1.7rem;
+      font-weight: 700;
     }
 
     .badge {
-      font-size: 0.75rem;
-      padding: 4px 8px;
-      border-radius: 999px;
       background: rgba(56,189,248,0.15);
       color: var(--accent);
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
     }
 
     .header-actions {
@@ -92,17 +92,16 @@
     }
 
     .btn-icon {
-      padding: 10px 14px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
+      padding: 8px 12px;
       background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
       color: var(--text);
       cursor: pointer;
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 0.85rem;
     }
 
-    /* METRICS PANEL */
+    /* METRICS */
     .metrics {
       display: flex;
       gap: 12px;
@@ -113,120 +112,113 @@
     .metric-card {
       background: var(--card);
       border: 1px solid var(--border);
-      padding: 12px 16px;
-      border-radius: 14px;
-      min-width: 150px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      min-width: 130px;
       flex-shrink: 0;
     }
 
     .metric-title {
-      font-size: 1rem;
+      font-size: 0.8rem;
       color: var(--muted);
-      font-weight: 600;
     }
 
     .metric-value {
-      font-size: 1.6rem;
-      font-weight: 800;
-      margin-top: 6px;
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-top: 4px;
     }
 
     /* FILTERS */
     .filters {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
-      margin: 18px 0;
+      gap: 10px;
+      margin: 14px 0;
     }
 
     .filter-input, select {
-      border-radius: 12px;
+      border-radius: 10px;
       border: 1px solid var(--border);
       background: var(--card);
       color: var(--text);
-      padding: 10px 14px;
-      font-size: 1.05rem;
-      font-weight: 600;
+      padding: 7px 10px;
     }
 
     select option {
+      background: #fff;
       color: #000 !important;
-      background: #fff !important;
     }
 
-    /* APPOINTMENT CARDS — DEALERSHIP MODE */
+    /* APPOINTMENT CARDS */
     .appt-card {
       display: flex;
       background: var(--card);
-      border-radius: 18px;
       border: 1px solid var(--border);
-      margin-bottom: 14px;
+      border-radius: 16px;
+      margin-bottom: 12px;
       cursor: pointer;
       transition: 0.15s ease;
-      padding: 12px 0;
     }
 
     .appt-card:hover {
-      transform: scale(1.015);
+      transform: scale(1.01);
       border-color: var(--accent);
     }
 
     .dept-strip {
-      width: 16px;
-      border-radius: 16px 0 0 16px;
+      width: 14px;
+      border-radius: 12px 0 0 12px;
     }
 
     .appt-body {
-      padding: 14px;
+      padding: 12px;
       flex: 1;
     }
 
     .appt-name {
-      font-size: 1.35rem;
-      font-weight: 800;
-      letter-spacing: -0.3px;
+      font-size: 1.1rem;
+      font-weight: 700;
     }
 
     .appt-meta {
-      font-size: 1rem;
+      font-size: 0.82rem;
       color: var(--muted);
-      margin-top: 6px;
-      font-weight: 500;
+      margin-top: 4px;
     }
 
-    /* STATUS COLOURS */
     .sold { background: rgba(34,197,94,0.15); }
     .shown { background: rgba(251,191,36,0.15); }
     .overdue { background: rgba(239,68,68,0.15); }
 
-    /* FAB */
+    /* Floating Add Button */
     .fab {
       position: fixed;
       bottom: 20px;
       right: 20px;
-      background: linear-gradient(135deg, #22c55e, #4ade80);
-      padding: 14px 28px;
+      background: linear-gradient(135deg,#22c55e,#4ade80);
+      padding: 12px 22px;
       border-radius: 999px;
-      color: #fff;
-      font-weight: 800;
-      font-size: 1.2rem;
+      color: white;
+      font-weight: 600;
       cursor: pointer;
+      z-index: 3000;
     }
 
-    /* SLIDE PANELS */
+    /* Panels */
     .panel {
       position: fixed;
       top: 0;
       right: -100%;
-      width: 85%;
-      max-width: 420px;
+      width: 80%;
+      max-width: 440px;
       height: 100vh;
       background: var(--card-alt);
       border-left: 1px solid var(--border);
-      padding: 22px;
-      transition: right 0.42s cubic-bezier(.25,.8,.25,1);
+      padding: 20px;
+      transition: 0.35s ease;
       overflow-y: auto;
-      z-index: 999;
+      z-index: 2000;
     }
 
     .panel.open {
@@ -234,35 +226,28 @@
     }
 
     .panel-title {
-      font-size: 1.6rem;
-      font-weight: 800;
-      margin-bottom: 16px;
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 14px;
     }
 
     .list-item {
-      padding: 14px 10px;
+      padding: 10px;
       border-bottom: 1px solid var(--border);
-      font-size: 1.05rem;
     }
 
     .close-panel {
       margin-top: 14px;
-      padding: 10px 14px;
-      border-radius: 12px;
+      padding: 8px 14px;
       border: 1px solid var(--border);
       background: var(--card);
+      border-radius: 10px;
       cursor: pointer;
-      font-size: 1.1rem;
-      font-weight: 700;
-    }
-
-    textarea {
-      font-size: 1.05rem;
-      font-weight: 500;
     }
   </style>
 </head>
-<body class="" id="body">
+
+<body id="body">
   <div class="shell">
 
     <!-- HEADER -->
@@ -280,7 +265,7 @@
     </div>
 
     <!-- METRICS -->
-    <div class="metrics" id="metrics"></div>
+    <div id="metrics" class="metrics"></div>
 
     <!-- FILTERS -->
     <div class="filters">
@@ -298,10 +283,9 @@
     <div id="list"></div>
 
     <button class="fab" id="addBtn">＋ New Appointment</button>
-
   </div>
 
-  <!-- SETTINGS PANEL -->
+  <!-- SETTINGS -->
   <div class="panel" id="panelSettings">
     <div class="panel-title">Settings</div>
     <h3>Sales Staff</h3>
@@ -313,7 +297,7 @@
     <button class="close-panel" id="closeSettings">Close</button>
   </div>
 
-  <!-- LEADERBOARD PANEL -->
+  <!-- LEADERBOARD -->
   <div class="panel" id="panelLeaderboard">
     <div class="panel-title">Leaderboard</div>
     <div id="leaderboard"></div>
@@ -327,26 +311,20 @@
     <form id="formAppt">
       <input type="hidden" id="apptId" />
 
-      <div class="list-item">
-        <div style="font-size:0.9rem;color:var(--muted);">Customer</div>
-        <input id="customer" class="filter-input" required />
-      </div>
-      <div class="list-item">
-        <div style="font-size:0.9rem;color:var(--muted);">Phone</div>
-        <input id="phone" class="filter-input" />
-      </div>
-      <div class="list-item">
-        <div style="font-size:0.9rem;color:var(--muted);">Sales Person</div>
+      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Customer</div><input id="customer" class="filter-input" required /></div>
+      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Phone</div><input id="phone" class="filter-input" /></div>
+
+      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Sales Person</div>
         <input id="sales" class="filter-input" list="salesDatalist" required />
         <datalist id="salesDatalist"></datalist>
       </div>
-      <div class="list-item">
-        <div style="font-size:0.9rem;color:var(--muted);">Business Manager</div>
+
+      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Business Manager</div>
         <input id="bm" class="filter-input" list="bmDatalist" />
         <datalist id="bmDatalist"></datalist>
       </div>
-      <div class="list-item">
-        <div style="font-size:0.9rem;color:var(--muted);">Department</div>
+
+      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Department</div>
         <select id="dept" class="filter-input" required>
           <option value="">Select…</option>
           <option value="Kia New">Kia New</option>
@@ -355,52 +333,52 @@
           <option value="Used Cars">Used Cars</option>
         </select>
       </div>
-      <div class="list-item">
-        <div style="font-size:0.9rem;color:var(--muted);">Vehicle of Interest</div>
+
+      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Vehicle Interest</div>
         <input id="vehicle" class="filter-input" />
       </div>
-      <div class="list-item">
-        <div style="font-size:0.9rem;color:var(--muted);">Stock #</div>
+
+      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Stock #</div>
         <input id="stock" class="filter-input" />
       </div>
-      <div class="list-item">
-        <div style="font-size:0.9rem;color:var(--muted);">Date</div>
+
+      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Date</div>
         <input type="date" id="date" class="filter-input" required />
       </div>
-      <div class="list-item">
-        <div style="font-size:0.9rem;color:var(--muted);">Time</div>
+
+      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Time</div>
         <input type="time" id="time" class="filter-input" required />
       </div>
-      <div class="list-item">
-        <div style="font-size:0.9rem;color:var(--muted);">Show</div>
+
+      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Show</div>
         <select id="show" class="filter-input">
           <option value="pending">Pending</option>
           <option value="yes">Yes</option>
           <option value="no">No</option>
         </select>
       </div>
-      <div class="list-item">
-        <div style="font-size:0.9rem;color:var(--muted);">Test Drive</div>
+
+      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Test Drive</div>
         <select id="td" class="filter-input">
           <option value="pending">Pending</option>
           <option value="yes">Yes</option>
           <option value="no">No</option>
         </select>
       </div>
-      <div class="list-item">
-        <div style="font-size:0.9rem;color:var(--muted);">Sold</div>
+
+      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Sold</div>
         <select id="sold" class="filter-input">
           <option value="pending">Pending</option>
           <option value="yes">Yes</option>
           <option value="no">No</option>
         </select>
       </div>
-      <div class="list-item">
-        <div style="font-size:0.9rem;color:var(--muted);">Deal #</div>
+
+      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Deal #</div>
         <input id="deal" class="filter-input" />
       </div>
-      <div class="list-item">
-        <div style="font-size:0.9rem;color:var(--muted);">Comments</div>
+
+      <div class="list-item"><div style="font-size:0.8rem;color:var(--muted);">Comments</div>
         <textarea id="comments" class="filter-input" style="min-height:70px;"></textarea>
       </div>
     </form>
@@ -411,22 +389,23 @@
       <button class="close-panel" id="saveAppt" style="flex:1;border-color:var(--accent);color:var(--accent);">Save</button>
     </div>
   </div>
-<script>
-/* -----------------------------------------------------
+<script id="apptScript">
+/* ---------------------------------------------------------
    CONFIG
------------------------------------------------------ */
+--------------------------------------------------------- */
 const SUPABASE_URL = "https://tfelmjnmedfeplcueevu.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmZWxtam5tZWRmZXBsY3VlZXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzMDE0OTMsImV4cCI6MjA3OTg3NzQ5M30.UFv00DEM570CxeFKAUV6LH424joWo3CDTuHhyIbuh80";
 
 const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* -----------------------------------------------------
-   DOM ELEMENTS
------------------------------------------------------ */
+/* ---------------------------------------------------------
+   DOM REFERENCES
+--------------------------------------------------------- */
 const bodyEl = document.getElementById("body");
 const listEl = document.getElementById("list");
 const metricsEl = document.getElementById("metrics");
+
 const filterDateEl = document.getElementById("filterDate");
 const filterSalesEl = document.getElementById("filterSales");
 const filterDeptEl = document.getElementById("filterDept");
@@ -459,25 +438,25 @@ const apptPanelTitle = document.getElementById("apptPanelTitle");
 const salesDatalist = document.getElementById("salesDatalist");
 const bmDatalist = document.getElementById("bmDatalist");
 
-/* -----------------------------------------------------
+/* ---------------------------------------------------------
    STATE
------------------------------------------------------ */
+--------------------------------------------------------- */
 let appointments = [];
 let salesStaff = [];
 let businessManagers = [];
 
-/* -----------------------------------------------------
-   UTILITIES
------------------------------------------------------ */
+/* ---------------------------------------------------------
+   UTILITY FUNCTIONS
+--------------------------------------------------------- */
 function deptColour(dept) {
   if (!dept) return "#4b5563";
   const d = dept.toLowerCase();
-  const css = getComputedStyle(document.documentElement);
+  const root = getComputedStyle(document.documentElement);
 
-  if (d.includes("kia")) return css.getPropertyValue("--kia");
-  if (d.includes("nissan")) return css.getPropertyValue("--nissan");
-  if (d.includes("gwm")) return css.getPropertyValue("--gwm");
-  if (d.includes("used")) return css.getPropertyValue("--used");
+  if (d.includes("kia")) return root.getPropertyValue("--kia");
+  if (d.includes("nissan")) return root.getPropertyValue("--nissan");
+  if (d.includes("gwm")) return root.getPropertyValue("--gwm");
+  if (d.includes("used")) return root.getPropertyValue("--used");
 
   return "#4b5563";
 }
@@ -485,12 +464,12 @@ function deptColour(dept) {
 function boolFromSelect(val) {
   if (val === "yes") return true;
   if (val === "no") return false;
-  return null; // pending
+  return null;
 }
 
-function selectFromBool(b) {
-  if (b === true) return "yes";
-  if (b === false) return "no";
+function selectFromBool(v) {
+  if (v === true) return "yes";
+  if (v === false) return "no";
   return "pending";
 }
 
@@ -500,35 +479,34 @@ function statusClass(appt) {
     ? new Date(appt.appt_date + "T" + (appt.appt_time || "00:00"))
     : null;
 
-  // Priority: sold → shown → overdue
   if (appt.sold === true) return "sold";
   if (appt.appt_show === true) return "shown";
   if (dt && dt < now) return "overdue";
-
   return "";
 }
 
 function withinMTD(appt, ref = new Date()) {
   if (!appt.appt_date) return false;
   const d = new Date(appt.appt_date);
-  return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth();
+  return (
+    d.getMonth() === ref.getMonth() &&
+    d.getFullYear() === ref.getFullYear()
+  );
 }
 
-/* -----------------------------------------------------
-   LOAD DATA
------------------------------------------------------ */
+/* ---------------------------------------------------------
+   LOAD DATA FROM SUPABASE
+--------------------------------------------------------- */
 async function loadAppointments() {
   const { data, error } = await supa.from("appointments").select("*");
+
   if (error) {
-    console.error(error);
-    listEl.innerHTML =
-      '<div style="padding:12px;color:var(--danger);">Error loading appointments.</div>';
+    console.error("Error loading appointments", error);
     return;
   }
 
   appointments = data || [];
 
-  // sort chronological
   appointments.sort((a, b) => {
     const da = new Date((a.appt_date || "1970-01-01") + "T" + (a.appt_time || "00:00"));
     const db = new Date((b.appt_date || "1970-01-01") + "T" + (b.appt_time || "00:00"));
@@ -559,15 +537,16 @@ async function loadBusinessManagers() {
   }
 }
 
-/* -----------------------------------------------------
-   FILTER RENDER
------------------------------------------------------ */
+/* ---------------------------------------------------------
+   RENDER UI
+--------------------------------------------------------- */
 function renderFilters() {
   const names = new Set();
-  appointments.forEach((a) => a.sales_person && names.add(a.sales_person));
+  appointments.forEach(a => a.sales_person && names.add(a.sales_person));
 
-  filterSalesEl.innerHTML = '<option value="">All Sales</option>';
-  [...names].sort().forEach((n) => {
+  filterSalesEl.innerHTML = "<option value=''>All Sales</option>";
+
+  [...names].sort().forEach(n => {
     const opt = document.createElement("option");
     opt.value = n;
     opt.textContent = n;
@@ -577,101 +556,75 @@ function renderFilters() {
 
 function applyFilters(list) {
   let res = [...list];
-
   const d = filterDateEl.value;
   const s = filterSalesEl.value;
   const dept = filterDeptEl.value;
 
-  if (d) res = res.filter((a) => a.appt_date === d);
-  if (s) res = res.filter((a) => (a.sales_person || "") === s);
-  if (dept) res = res.filter((a) => (a.department || "") === dept);
+  if (d) res = res.filter(a => a.appt_date === d);
+  if (s) res = res.filter(a => a.sales_person === s);
+  if (dept) res = res.filter(a => a.department === dept);
 
   return res;
 }
 
-/* -----------------------------------------------------
-   APPOINTMENT LIST RENDER
------------------------------------------------------ */
 function renderAppointments() {
-  const filtered = applyFilters(appointments);
+  const rows = applyFilters(appointments);
 
-  if (!filtered.length) {
+  if (!rows.length) {
     listEl.innerHTML =
-      '<div style="padding:16px;color:var(--muted);">No appointments found.</div>';
+      "<div style='padding:16px;color:var(--muted);font-size:0.9rem;'>No appointments found.</div>";
     return;
   }
 
-  listEl.innerHTML = filtered
-    .map((a) => {
+  listEl.innerHTML = rows
+    .map(a => {
       const cls = statusClass(a);
       const strip = deptColour(a.department);
 
       return `
-        <article class="appt-card ${cls}" data-id="${a.id}">
-          <div class="dept-strip" style="background:${strip};"></div>
-          <div class="appt-body">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-              <div class="appt-name">${a.customer_name || ""}</div>
-              <div style="font-size:1.15rem;color:var(--accent);font-weight:700;">
-                ${a.appt_time || ""}
-              </div>
+      <article class="appt-card ${cls}" data-id="${a.id}">
+        <div class="dept-strip" style="background:${strip};"></div>
+        <div class="appt-body">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="appt-name">${a.customer_name || ""}</div>
+            <div style="font-size:0.9rem;color:var(--accent);font-weight:600;">
+              ${a.appt_time || ""}
             </div>
-
-            <div class="appt-meta">
-              ${a.appt_date || ""} · ${a.sales_person || ""} ${
-        a.department ? "· " + a.department : ""
-      }
-            </div>
-
-            <div class="appt-meta">
-              ${a.stock_number ? "Stock " + a.stock_number + " · " : ""}
-              ${a.business_manager ? "BM: " + a.business_manager + " · " : ""}
-              ${a.deal_number ? "Deal " + a.deal_number : ""}
-            </div>
-
-            <div class="appt-meta" style="margin-top:6px;">
-              ${statusText(a)}
-            </div>
-
-            ${
-              a.comments
-                ? `<div class="appt-meta" style="margin-top:6px;opacity:.85;">${a.comments}</div>`
-                : ""
-            }
           </div>
-        </article>
-      `;
+          <div class="appt-meta">
+            ${a.appt_date || ""} · ${a.sales_person || ""} · ${a.department || ""}
+          </div>
+          <div class="appt-meta" style="margin-top:2px;">
+            ${a.vehicle_interest ? "· " + a.vehicle_interest : ""}
+            ${a.stock_number ? "· Stock " + a.stock_number : ""}
+            ${a.business_manager ? "· BM: " + a.business_manager : ""}
+          </div>
+          <div class="appt-meta" style="margin-top:4px;">
+            ${a.comments || ""}
+          </div>
+        </div>
+      </article>`;
     })
     .join("");
+
+  /* ENSURE CLICK HANDLERS ARE ALWAYS ATTACHED */
+  document.querySelectorAll(".appt-card").forEach(card => {
+    card.addEventListener("click", () => {
+      const id = card.getAttribute("data-id");
+      const appt = appointments.find(a => a.id === id);
+      if (appt) openApptModal(appt);
+    });
+  });
 }
 
-function statusText(a) {
-  const bits = [];
-
-  if (a.appt_show === true) bits.push("Shown");
-  else if (a.appt_show === false) bits.push("No Show");
-  else bits.push("Show Pending");
-
-  if (a.test_drive === true) bits.push("Test Driven");
-  else if (a.test_drive === false) bits.push("No TD");
-
-  if (a.sold === true) bits.push("Sold");
-  else if (a.sold === false) bits.push("Not Sold");
-
-  return bits.join(" | ");
-}
-
-/* -----------------------------------------------------
-   METRICS (MTD)
------------------------------------------------------ */
 function renderMetrics() {
   const now = new Date();
-  const mtd = appointments.filter((a) => withinMTD(a, now));
 
+  const mtd = appointments.filter(a => withinMTD(a, now));
   const total = mtd.length;
-  const shown = mtd.filter((a) => a.appt_show === true).length;
-  const td = mtd.filter((a) => a.test_drive === true).length;
-  const sold = mtd.filter((a) => a.sold === true).length;
+  const shown = mtd.filter(a => a.appt_show === true).length;
+  const td = mtd.filter(a => a.test_drive === true).length;
+  const sold = mtd.filter(a => a.sold === true).length;
 
   metricsEl.innerHTML = `
     <div class="metric-card">
@@ -693,21 +646,17 @@ function renderMetrics() {
   `;
 }
 
-/* -----------------------------------------------------
-   LEADERBOARD (MTD)
------------------------------------------------------ */
 function renderLeaderboard() {
   const now = new Date();
-  const mtd = appointments.filter((a) => withinMTD(a, now));
+  const mtd = appointments.filter(a => withinMTD(a, now));
 
   const bySales = {};
 
-  mtd.forEach((a) => {
+  mtd.forEach(a => {
     const name = a.sales_person || "Unknown";
-    if (!bySales[name]) {
-      bySales[name] = { appts: 0, shown: 0, td: 0, sold: 0 };
-    }
+    if (!bySales[name]) bySales[name] = { appts: 0, shown: 0, td: 0, sold: 0 };
     const s = bySales[name];
+
     s.appts++;
     if (a.appt_show === true) s.shown++;
     if (a.test_drive === true) s.td++;
@@ -720,140 +669,123 @@ function renderLeaderboard() {
 
   if (!rows.length) {
     leaderboardEl.innerHTML =
-      '<div style="color:var(--muted);padding:10px;">No MTD data yet.</div>';
+      "<div style='color:var(--muted);font-size:0.9rem;'>No MTD data yet.</div>";
     return;
   }
 
   leaderboardEl.innerHTML = rows
     .map(([name, s], i) => {
-      const shownPct = s.appts ? Math.round((s.shown / s.appts) * 100) : 0;
-      const tdPct = s.appts ? Math.round((s.td / s.appts) * 100) : 0;
-      const soldPct = s.appts ? Math.round((s.sold / s.appts) * 100) : 0;
+      const pctShown = s.appts ? Math.round((s.shown / s.appts) * 100) : 0;
+      const pctTd = s.appts ? Math.round((s.td / s.appts) * 100) : 0;
+      const pctSold = s.appts ? Math.round((s.sold / s.appts) * 100) : 0;
 
       return `
-        <div class="list-item">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div><strong>${i + 1}. ${name}</strong></div>
-            <div style="font-size:0.9rem;color:var(--muted);">Appts: ${s.appts}</div>
-          </div>
-          <div style="font-size:0.9rem;margin-top:4px;">
-            Show: ${s.shown} (${shownPct}%) · TD: ${s.td} (${tdPct}%) · Sold: ${
-        s.sold
-      } (${soldPct}%)
-          </div>
-        </div>
-      `;
+      <div class="list-item">
+        <strong>${i + 1}. ${name}</strong> — Appts: ${s.appts}<br>
+        <span style="font-size:0.8rem;color:var(--muted);">
+          Show: ${s.shown} (${pctShown}%) ·
+          TD: ${s.td} (${pctTd}%) ·
+          Sold: ${s.sold} (${pctSold}%)
+        </span>
+      </div>`;
     })
     .join("");
 }
 
-/* -----------------------------------------------------
-   SETTINGS PANELS — SALES STAFF
------------------------------------------------------ */
 function renderSalesSettings() {
   if (!salesStaff.length) {
     salesListEl.innerHTML =
-      '<div class="list-item" style="color:var(--muted);">No sales staff yet.</div>';
+      "<div class='list-item' style='color:var(--muted);'>No sales staff yet.</div>";
   } else {
     salesListEl.innerHTML = salesStaff
       .map(
-        (s) => `
+        s => `
       <div class="list-item">
-        <div><strong>${s.name}</strong> ${s.active === false ? "(inactive)" : ""}</div>
-        <div style="font-size:0.9rem;color:var(--muted);">${s.email || ""}</div>
-      </div>
-    `
+        <strong>${s.name}</strong> ${s.active === false ? "(inactive)" : ""}
+        <div style="font-size:0.8rem;color:var(--muted);">${s.email || ""}</div>
+      </div>`
       )
       .join("");
   }
 
-  // Add-new block
-  const add = document.createElement("div");
-  add.className = "list-item";
-  add.innerHTML = `
-    <div style="font-size:0.9rem;color:var(--muted);">Add Sales Staff</div>
+  const block = document.createElement("div");
+  block.className = "list-item";
+  block.innerHTML = `
+    <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px;">Add Sales Staff</div>
     <input id="newSalesName" class="filter-input" placeholder="Name" />
     <input id="newSalesEmail" class="filter-input" placeholder="Email" style="margin-top:6px;" />
-    <button id="addSalesBtn" class="close-panel" style="margin-top:8px;padding:6px 10px;">Add</button>
+    <button id="addSalesBtn" class="close-panel" style="margin-top:6px;">Add</button>
   `;
-  salesListEl.appendChild(add);
+  salesListEl.appendChild(block);
 
   document.getElementById("addSalesBtn").onclick = async () => {
     const name = document.getElementById("newSalesName").value.trim();
     const email = document.getElementById("newSalesEmail").value.trim();
+
     if (!name) return alert("Name required");
 
-    const { error } = await supa.from("sales_staff").insert({ name, email, active: true });
-    if (error) alert("Error adding staff");
-    else await loadSalesStaff();
+    await supa.from("sales_staff").insert({ name, email, active: true });
+    await loadSalesStaff();
+  };
+}
+
+function renderBMSettings() {
+  if (!businessManagers.length) {
+    bmListEl.innerHTML =
+      "<div class='list-item' style='color:var(--muted);'>No business managers yet.</div>";
+  } else {
+    bmListEl.innerHTML = businessManagers
+      .map(
+        s => `
+      <div class="list-item">
+        <strong>${s.name}</strong> ${s.active === false ? "(inactive)" : ""}
+        <div style="font-size:0.8rem;color:var(--muted);">${s.email || ""}</div>
+      </div>`
+      )
+      .join("");
+  }
+
+  const block = document.createElement("div");
+  block.className = "list-item";
+  block.innerHTML = `
+    <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px;">Add Business Manager</div>
+    <input id="newBmName" class="filter-input" placeholder="Name" />
+    <input id="newBmEmail" class="filter-input" placeholder="Email" style="margin-top:6px;" />
+    <button id="addBmBtn" class="close-panel" style="margin-top:6px;">Add</button>
+  `;
+  bmListEl.appendChild(block);
+
+  document.getElementById("addBmBtn").onclick = async () => {
+    const name = document.getElementById("newBmName").value.trim();
+    const email = document.getElementById("newBmEmail").value.trim();
+
+    if (!name) return alert("Name required");
+
+    await supa.from("business_managers").insert({ name, email, active: true });
+    await loadBusinessManagers();
   };
 }
 
 function renderSalesDatalist() {
   salesDatalist.innerHTML = salesStaff
-    .map((s) => `<option value="${s.name}">`)
+    .map(s => `<option value="${s.name}">`)
     .join("");
-}
-
-/* -----------------------------------------------------
-   SETTINGS PANELS — BUSINESS MANAGERS
------------------------------------------------------ */
-function renderBMSettings() {
-  if (!businessManagers.length) {
-    bmListEl.innerHTML =
-      '<div class="list-item" style="color:var(--muted);">No business managers yet.</div>';
-  } else {
-    bmListEl.innerHTML = businessManagers
-      .map(
-        (s) => `
-      <div class="list-item">
-        <div><strong>${s.name}</strong> ${s.active === false ? "(inactive)" : ""}</div>
-        <div style="font-size:0.9rem;color:var(--muted);">${s.email || ""}</div>
-      </div>
-    `
-      )
-      .join("");
-  }
-
-  // Add-new block
-  const add = document.createElement("div");
-  add.className = "list-item";
-  add.innerHTML = `
-    <div style="font-size:0.9rem;color:var(--muted);">Add Business Manager</div>
-    <input id="newBmName" class="filter-input" placeholder="Name" />
-    <input id="newBmEmail" class="filter-input" placeholder="Email" style="margin-top:6px;" />
-    <button id="addBmBtn" class="close-panel" style="margin-top:8px;padding:6px 10px;">Add</button>
-  `;
-  bmListEl.appendChild(add);
-
-  document.getElementById("addBmBtn").onclick = async () => {
-    const name = document.getElementById("newBmName").value.trim();
-    const email = document.getElementById("newBmEmail").value.trim();
-    if (!name) return alert("Name required");
-
-    const { error } = await supa
-      .from("business_managers")
-      .insert({ name, email, active: true });
-
-    if (error) alert("Error adding BM");
-    else await loadBusinessManagers();
-  };
 }
 
 function renderBMDatalist() {
   bmDatalist.innerHTML = businessManagers
-    .map((s) => `<option value="${s.name}">`)
+    .map(s => `<option value="${s.name}">`)
     .join("");
 }
 
-/* -----------------------------------------------------
-   APPOINTMENT MODAL
------------------------------------------------------ */
+/* ---------------------------------------------------------
+   MODAL LOGIC
+--------------------------------------------------------- */
 function openApptModal(appt) {
   if (appt) {
     apptPanelTitle.textContent = "Edit Appointment";
-
     apptIdEl.value = appt.id;
+
     customerEl.value = appt.customer_name || "";
     phoneEl.value = appt.phone || "";
     salesEl.value = appt.sales_person || "";
@@ -870,7 +802,6 @@ function openApptModal(appt) {
     commentsEl.value = appt.comments || "";
   } else {
     apptPanelTitle.textContent = "New Appointment";
-
     apptIdEl.value = "";
     customerEl.value = "";
     phoneEl.value = "";
@@ -895,6 +826,9 @@ function closeApptModal() {
   panelAppt.classList.remove("open");
 }
 
+/* ---------------------------------------------------------
+   SAVE / DELETE
+--------------------------------------------------------- */
 async function saveAppointment() {
   const payload = {
     customer_name: customerEl.value.trim(),
@@ -919,19 +853,12 @@ async function saveAppointment() {
   if (!payload.appt_date) return alert("Date required");
   if (!payload.appt_time) return alert("Time required");
 
-  let error;
   const id = apptIdEl.value;
 
   if (id) {
-    ({ error } = await supa.from("appointments").update(payload).eq("id", id));
+    await supa.from("appointments").update(payload).eq("id", id);
   } else {
-    ({ error } = await supa.from("appointments").insert(payload));
-  }
-
-  if (error) {
-    console.error(error);
-    alert("Error saving appointment.");
-    return;
+    await supa.from("appointments").insert(payload);
   }
 
   closeApptModal();
@@ -940,79 +867,66 @@ async function saveAppointment() {
 
 async function deleteAppointment() {
   const id = apptIdEl.value;
-  if (!id) return closeApptModal();
+  if (!id) {
+    closeApptModal();
+    return;
+  }
 
   if (!confirm("Delete this appointment?")) return;
 
-  const { error } = await supa.from("appointments").delete().eq("id", id);
-  if (error) {
-    console.error(error);
-    alert("Error deleting appointment.");
-    return;
-  }
+  await supa.from("appointments").delete().eq("id", id);
 
   closeApptModal();
   await loadAppointments();
 }
 
-/* -----------------------------------------------------
-   EVENTS
------------------------------------------------------ */
-document.getElementById("addBtn").onclick = () => openApptModal(null);
+/* ---------------------------------------------------------
+   EVENT BINDINGS — GITHUB SAFE
+--------------------------------------------------------- */
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("addBtn").onclick = () => openApptModal(null);
 
-document.getElementById("openSettings").onclick = () =>
-  panelSettings.classList.add("open");
-document.getElementById("closeSettings").onclick = () =>
-  panelSettings.classList.remove("open");
+  document.getElementById("openSettings").onclick = () =>
+    panelSettings.classList.add("open");
+  document.getElementById("closeSettings").onclick = () =>
+    panelSettings.classList.remove("open");
 
-document.getElementById("openLeaderboard").onclick = () =>
-  panelLeaderboard.classList.add("open");
-document.getElementById("closeLeaderboard").onclick = () =>
-  panelLeaderboard.classList.remove("open");
+  document.getElementById("openLeaderboard").onclick = () =>
+    panelLeaderboard.classList.add("open");
+  document.getElementById("closeLeaderboard").onclick = () =>
+    panelLeaderboard.classList.remove("open");
 
-document.getElementById("cancelAppt").onclick = closeApptModal;
-document.getElementById("saveAppt").onclick = (e) => {
-  e.preventDefault();
-  saveAppointment();
-};
-document.getElementById("deleteAppt").onclick = (e) => {
-  e.preventDefault();
-  deleteAppointment();
-};
+  document.getElementById("cancelAppt").onclick = () => closeApptModal();
+  document.getElementById("saveAppt").onclick = e => {
+    e.preventDefault();
+    saveAppointment();
+  };
+  document.getElementById("deleteAppt").onclick = e => {
+    e.preventDefault();
+    deleteAppointment();
+  };
 
-// click card → edit
-listEl.addEventListener("click", (e) => {
-  const card = e.target.closest(".appt-card");
-  if (!card) return;
-  const id = card.getAttribute("data-id");
-  const appt = appointments.find((a) => String(a.id) === String(id));
-  if (appt) openApptModal(appt);
+  /* Filters */
+  filterDateEl.onchange =
+    filterSalesEl.onchange =
+    filterDeptEl.onchange =
+      () => {
+        renderAppointments();
+        renderMetrics();
+        renderLeaderboard();
+      };
+
+  /* Light Mode */
+  document.getElementById("toggleMode").onclick = () => {
+    const isLight = bodyEl.classList.toggle("light");
+    document.getElementById("toggleMode").textContent = isLight ? "☀️" : "🌙";
+  };
+
+  /* INITIAL LOAD */
+  (async () => {
+    await loadAppointments();
+    await loadSalesStaff();
+    await loadBusinessManagers();
+  })();
 });
-
-// filters
-filterDateEl.onchange =
-  filterSalesEl.onchange =
-  filterDeptEl.onchange =
-    () => {
-      renderAppointments();
-      renderMetrics();
-      renderLeaderboard();
-    };
-
-// mode toggle
-document.getElementById("toggleMode").onclick = () => {
-  const isLight = bodyEl.classList.toggle("light");
-  document.getElementById("toggleMode").textContent = isLight ? "☀️" : "🌙";
-};
-
-/* -----------------------------------------------------
-   INIT
------------------------------------------------------ */
-(async function init() {
-  await Promise.all([
-    loadAppointments(),
-    loadSalesStaff(),
-    loadBusinessManagers(),
-  ]);
-})();
 </script>
