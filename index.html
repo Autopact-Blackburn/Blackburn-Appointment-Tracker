@@ -105,30 +105,46 @@
       justify-content: flex-end;
     }
 
-/* WEEK BUTTON DEFAULT (OFF) */
-#btnWeek {
-  border-color: var(--accent);
-  color: var(--accent);
-  font-weight: 500;
-}
+    /* WEEK BUTTON DEFAULT (OFF) */
+    #btnWeek {
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 500;
+    }
 
-/* Hover effect when OFF */
-#btnWeek:hover {
-  background: rgba(14,165,233,0.12);
-  transform: translateY(-1px);
-}
+    /* Hover effect when OFF */
+    #btnWeek:hover {
+      background: rgba(14,165,233,0.12);
+      transform: translateY(-1px);
+    }
 
-/* WHEN ON (GLOW MODE) — keep as you wrote */
-#btnWeek.glow {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: rgba(14,165,233,0.22);
-  box-shadow:
-    0 0 10px rgba(14,165,233,0.4),
-    0 0 18px rgba(14,165,233,0.25);
-  font-weight: 600;
-}
+    /* WHEN ON (GLOW MODE) */
+    #btnWeek.glow {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(14,165,233,0.22);
+      box-shadow:
+        0 0 10px rgba(14,165,233,0.4),
+        0 0 18px rgba(14,165,233,0.25);
+      font-weight: 600;
+    }
 
+    /* SOLD PILL – GOLD ------------------------------------------- */
+    #btnSold {
+      border-color: var(--warning);
+      color: var(--warning);
+      font-weight: 500;
+    }
+
+    #btnSold.active {
+      border-color: var(--warning);
+      color: var(--warning);
+      background: rgba(251,191,36,0.18);
+      box-shadow:
+        0 0 10px rgba(251,191,36,0.45),
+        0 0 18px rgba(251,191,36,0.28);
+      font-weight: 600;
+    }
 
     .btn-icon {
       padding: 8px 10px;
@@ -144,9 +160,16 @@
     /* Metrics ---------------------------------------------------- */
     .metrics {
       display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px 0;
+    }
+
+    .metrics-row {
+      display: flex;
       gap: 12px;
       overflow-x: auto;
-      padding: 10px 0;
+      padding: 2px 0;
     }
 
     .metric-card {
@@ -156,6 +179,7 @@
       border-radius: 12px;
       min-width: 130px;
       flex-shrink: 0;
+      transition: box-shadow 0.2s ease, transform 0.2s ease, background 0.2s ease;
     }
 
     .metric-title {
@@ -202,8 +226,7 @@
       font-size: 0.8rem;
       cursor: pointer;
       white-space: nowrap;
-transition: all 0.25s ease;
-
+      transition: all 0.25s ease;
     }
 
     .filter-chip.active {
@@ -406,16 +429,17 @@ transition: all 0.25s ease;
 
     <!-- FILTERS -->
     <div class="filters">
-<input 
-  type="text" 
-  id="filterSearch" 
-  class="filter-input" 
-  placeholder="Search name, phone, stock…" 
-  style="flex:1;" 
-/>
+      <input 
+        type="text" 
+        id="filterSearch" 
+        class="filter-input" 
+        placeholder="Search name, phone, stock…" 
+        style="flex:1;" 
+      />
       <select id="filterMonth" class="filter-input"></select>
       <input type="date" id="filterDate" class="filter-input" />
       <button id="btnWeek" class="filter-chip">This Week</button>
+      <button id="btnSold" class="filter-chip">Sold</button>
 
       <select id="filterSales" class="filter-input">
         <option value="">All Sales</option>
@@ -586,12 +610,13 @@ transition: all 0.25s ease;
   const listEl = document.getElementById("list");
   const metricsEl = document.getElementById("metrics");
 
-const filterSearchEl = document.getElementById("filterSearch");
+  const filterSearchEl = document.getElementById("filterSearch");
   const filterMonthEl = document.getElementById("filterMonth");
   const filterDateEl = document.getElementById("filterDate");
   const filterSalesEl = document.getElementById("filterSales");
   const filterDeptEl = document.getElementById("filterDept");
   const btnWeekEl = document.getElementById("btnWeek");
+  const btnSoldEl = document.getElementById("btnSold");
 
   const panelSettings = document.getElementById("panelSettings");
   const panelLeaderboard = document.getElementById("panelLeaderboard");
@@ -633,7 +658,9 @@ const filterSearchEl = document.getElementById("filterSearch");
   let currentMonthValue = null; // 'YYYY-MM'
   let currentDay = null;        // 'YYYY-MM-DD'
   let weekRange = null;         // { start, end }
-let filterNoShows = false;
+  let filterNoShows = false;
+  // Sold filter: "hide" = hide sold, "only" = only sold
+  let soldFilterMode = "hide";
 
   // ---- UTIL ----
   function deptColour(dept) {
@@ -798,29 +825,38 @@ let filterNoShows = false;
     const dept = filterDeptEl.value;
     if (s) res = res.filter(a => (a.sales_person || "") === s);
     if (dept) res = res.filter(a => (a.department || "") === dept);
-// SEARCH FILTER
-const q = filterSearchEl.value.trim().toLowerCase();
-if (q) {
-  res = res.filter(a => {
-    return (
-      (a.customer_name || "").toLowerCase().includes(q) ||
-      (a.phone || "").toLowerCase().includes(q) ||
-      (a.stock_number || "").toLowerCase().includes(q) ||
-      (a.vehicle_interest || "").toLowerCase().includes(q) ||
-      (a.deal_number || "").toLowerCase().includes(q) ||
-      (a.comments || "").toLowerCase().includes(q)
-    );
-  });
-}
-// No-Show filter (overdue + not shown)
-if (filterNoShows) {
-  const now = new Date();
-  res = res.filter(a => {
-    if (!a.appt_date || !a.appt_time) return false;
-    const dt = new Date(a.appt_date + "T" + a.appt_time);
-    return dt < now && a.appt_show !== true;
-  });
-}
+
+    // SEARCH FILTER
+    const q = filterSearchEl.value.trim().toLowerCase();
+    if (q) {
+      res = res.filter(a => {
+        return (
+          (a.customer_name || "").toLowerCase().includes(q) ||
+          (a.phone || "").toLowerCase().includes(q) ||
+          (a.stock_number || "").toLowerCase().includes(q) ||
+          (a.vehicle_interest || "").toLowerCase().includes(q) ||
+          (a.deal_number || "").toLowerCase().includes(q) ||
+          (a.comments || "").toLowerCase().includes(q)
+        );
+      });
+    }
+
+    // No-Show filter (overdue + not shown)
+    if (filterNoShows) {
+      const now = new Date();
+      res = res.filter(a => {
+        if (!a.appt_date || !a.appt_time) return false;
+        const dt = new Date(a.appt_date + "T" + a.appt_time);
+        return dt < now && a.appt_show !== true;
+      });
+    }
+
+    // SOLD FILTER (Option B)
+    if (soldFilterMode === "hide") {
+      res = res.filter(a => a.sold !== true);
+    } else if (soldFilterMode === "only") {
+      res = res.filter(a => a.sold === true);
+    }
 
     return res;
   }
@@ -889,64 +925,76 @@ if (filterNoShows) {
       .join("");
   }
 
-function countNoShows(list) {
-  const now = new Date();
-  return list.filter(a => {
-    if (!a.appt_date || !a.appt_time) return false;
-    const dt = new Date(a.appt_date + "T" + a.appt_time);
-    return dt < now && a.appt_show !== true; // not shown & overdue
-  }).length;
-}
+  function countNoShows(list) {
+    const now = new Date();
+    return list.filter(a => {
+      if (!a.appt_date || !a.appt_time) return false;
+      const dt = new Date(a.appt_date + "T" + a.appt_time);
+      return dt < now && a.appt_show !== true; // not shown & overdue
+    }).length;
+  }
 
   function renderMetrics() {
-  const subset = applyFilters(appointments);
-  const total = subset.length;
-  const shown = subset.filter(a => a.appt_show === true).length;
-  const tds = subset.filter(a => a.test_drive === true).length;
-  const sold = subset.filter(a => a.sold === true).length;
+    const subset = applyFilters(appointments);
+    const total = subset.length;
+    const shown = subset.filter(a => a.appt_show === true).length;
+    const tds = subset.filter(a => a.test_drive === true).length;
+    const sold = subset.filter(a => a.sold === true).length;
 
-  const noShows = countNoShows(subset);
+    const noShows = countNoShows(subset);
+    const activeNoShow = filterNoShows && noShows > 0;
 
-  metricsEl.innerHTML = `
-  <div class="metric-card">
-    <div class="metric-title">Appointments</div>
-    <div class="metric-value">${total}</div>
-  </div>
+    const noShowBg = activeNoShow
+      ? "rgba(239,68,68,0.22)"
+      : (noShows > 0 ? "rgba(239,68,68,0.15)" : "var(--card)");
+    const noShowShadow = activeNoShow
+      ? "0 0 12px rgba(239,68,68,0.65)"
+      : "none";
 
-  <div class="metric-card">
-    <div class="metric-title">Shown</div>
-    <div class="metric-value">${shown}</div>
-  </div>
+    metricsEl.innerHTML = `
+      <div class="metrics-row">
+        <div class="metric-card">
+          <div class="metric-title">Appointments</div>
+          <div class="metric-value">${total}</div>
+        </div>
 
-  <div class="metric-card">
-    <div class="metric-title">Test Drives</div>
-    <div class="metric-value">${tds}</div>
-  </div>
+        <div class="metric-card">
+          <div class="metric-title">Shown</div>
+          <div class="metric-value">${shown}</div>
+        </div>
 
-  <div class="metric-card">
-    <div class="metric-title">Sold</div>
-    <div class="metric-value">${sold}</div>
-  </div>
+        <div class="metric-card">
+          <div class="metric-title">Test Drives</div>
+          <div class="metric-value">${tds}</div>
+        </div>
 
- <div class="metric-card"
-     id="metricNoShows"
-     style="
-        cursor:pointer;
-        border-color:${noShows>0?'var(--danger)':'var(--border)'};
-        background:${noShows>0?'rgba(239,68,68,0.15)':'var(--card)'};
-     ">
-  <div class="metric-title"
-       style="color:${noShows>0?'var(--danger)':'var(--muted)'};">
-    No Shows / Overdue
-  </div>
-  <div class="metric-value"
-       style="color:${noShows>0?'var(--danger)':'var(--muted)'};">
-    ${noShows}
-  </div>
-</div>
-`;
-}
+        <div class="metric-card">
+          <div class="metric-title">Sold</div>
+          <div class="metric-value">${sold}</div>
+        </div>
+      </div>
 
+      <div class="metrics-row">
+        <div class="metric-card"
+             id="metricNoShows"
+             style="
+               cursor:pointer;
+               border-color:${noShows>0 ? 'var(--danger)' : 'var(--border)'};
+               background:${noShowBg};
+               box-shadow:${noShowShadow};
+             ">
+          <div class="metric-title"
+               style="color:${noShows>0 ? 'var(--danger)' : 'var(--muted)'};">
+            No Shows / Overdue
+          </div>
+          <div class="metric-value"
+               style="color:${noShows>0 ? 'var(--danger)' : 'var(--muted)'};">
+            ${noShows}
+          </div>
+        </div>
+      </div>
+    `;
+  }
 
   function renderLeaderboard() {
     const subset = applyFilters(appointments);
@@ -1089,7 +1137,6 @@ function countNoShows(list) {
       .map(s => `<option value="${s.name}">`)
       .join("");
   }
-
   // ---- APPOINTMENT MODAL ----
   function openApptModal(appt) {
     lockBodyScroll(true);
@@ -1349,25 +1396,17 @@ function countNoShows(list) {
   // ---- EVENTS ----
   document.addEventListener("DOMContentLoaded", () => {
     initMonthSelector();
-document.addEventListener("click", e => {
-  const noShowTile = e.target.closest("#metricNoShows");
-  if (noShowTile) {
-    filterNoShows = !filterNoShows;
 
-    // glow effect to indicate filtering ON
-    if (filterNoShows) {
-      noShowTile.style.boxShadow = "0 0 12px rgba(239,68,68,0.5)";
-      noShowTile.style.transform = "scale(1.02)";
-    } else {
-      noShowTile.style.boxShadow = "none";
-      noShowTile.style.transform = "scale(1)";
-    }
-
-    renderAppointments();
-    renderMetrics();  // re-renders tile rewritten
-    renderLeaderboard();
-  }
-});
+    // No-Show tile toggle
+    document.addEventListener("click", e => {
+      const noShowTile = e.target.closest("#metricNoShows");
+      if (noShowTile) {
+        filterNoShows = !filterNoShows;
+        renderAppointments();
+        renderMetrics();
+        renderLeaderboard();
+      }
+    });
 
     // FAB
     document.getElementById("addBtn").onclick = () => openApptModal(null);
@@ -1427,7 +1466,8 @@ document.addEventListener("click", e => {
       currentMonthValue = filterMonthEl.value;
       currentDay = null;
       filterDateEl.value = "";
-      btnWeekEl.classList.remove("active");
+      btnWeekEl.classList.remove("glow");
+      weekRange = null;
       rerenderAll();
     };
 
@@ -1436,7 +1476,8 @@ document.addEventListener("click", e => {
       if (val) {
         currentView = "day";
         currentDay = val;
-        btnWeekEl.classList.remove("active");
+        btnWeekEl.classList.remove("glow");
+        weekRange = null;
       } else {
         currentView = "month";
         currentDay = null;
@@ -1444,31 +1485,47 @@ document.addEventListener("click", e => {
       rerenderAll();
     };
 
-   btnWeekEl.onclick = () => {
-  if (btnWeekEl.classList.contains("glow")) {
-    // Turn OFF → revert to month
-    btnWeekEl.classList.remove("glow");
-    currentView = "month";
-  } else {
-    // Turn ON → week mode
-    btnWeekEl.classList.add("glow");
-    currentView = "week";
-    weekRange = getWeekRange(new Date());
-    filterDateEl.value = "";
-    currentDay = null;
-  }
+    // Week toggle
+    btnWeekEl.onclick = () => {
+      if (btnWeekEl.classList.contains("glow")) {
+        // Turn OFF → revert to month
+        btnWeekEl.classList.remove("glow");
+        currentView = "month";
+        weekRange = null;
+      } else {
+        // Turn ON → week mode
+        btnWeekEl.classList.add("glow");
+        currentView = "week";
+        weekRange = getWeekRange(new Date());
+        filterDateEl.value = "";
+        currentDay = null;
+      }
 
-  renderAppointments();
-  renderMetrics();
-  renderLeaderboard();
-};
+      renderAppointments();
+      renderMetrics();
+      renderLeaderboard();
+    };
 
-// Search filter
-filterSearchEl.oninput = () => {
-  renderAppointments();
-  renderMetrics();
-  renderLeaderboard();
-};
+    // SOLD PILL TOGGLE (Option B)
+    btnSoldEl.onclick = () => {
+      if (soldFilterMode === "hide") {
+        soldFilterMode = "only";
+        btnSoldEl.classList.add("active");
+      } else {
+        soldFilterMode = "hide";
+        btnSoldEl.classList.remove("active");
+      }
+      renderAppointments();
+      renderMetrics();
+      renderLeaderboard();
+    };
+
+    // Search filter
+    filterSearchEl.oninput = () => {
+      renderAppointments();
+      renderMetrics();
+      renderLeaderboard();
+    };
 
     // Dark / Light toggle
     document.getElementById("toggleMode").onclick = () => {
