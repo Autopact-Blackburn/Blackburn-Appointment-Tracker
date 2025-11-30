@@ -826,6 +826,9 @@ renderSalesFilter();
 function applyOtherFilters(list) {
   let res = [...list];
 
+const dept = filterDeptEl.value;
+
+
   // Date filter (specific day)
   if (currentView === "day" && currentDay) {
     res = res.filter(a => a.appt_date === currentDay);
@@ -851,8 +854,6 @@ if (s) {
     );
   });
 }
-
-
 
     if (dept) {
   res = res.filter(a => {
