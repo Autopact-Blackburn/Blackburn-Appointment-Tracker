@@ -505,14 +505,16 @@
 
         <div class="list-item">
           <div class="field-label">Sales Person</div>
-          <input id="sales" list="salesDatalist" class="filter-input" required />
-          <datalist id="salesDatalist"></datalist>
+          <select id="sales" class="filter-input" required>
+  <option value="">Select Salesperson</option>
+</select>
         </div>
 
         <div class="list-item">
           <div class="field-label">Business Manager</div>
-          <input id="bm" list="bmDatalist" class="filter-input" />
-          <datalist id="bmDatalist"></datalist>
+          <select id="bm" class="filter-input">
+  <option value="">Select Business Manager</option>
+</select>
         </div>
 
         <div class="list-item">
@@ -780,7 +782,7 @@ window.supa = supa;
     }
     salesStaff = data || [];
     renderSalesSettings();
-    renderSalesDatalist();
+    renderSalesSelect();
   }
 
   async function loadBusinessManagers() {
@@ -791,7 +793,7 @@ window.supa = supa;
     }
     businessManagers = data || [];
     renderBMSettings();
-    renderBMDatalist();
+    renderBMSelect();
   }
 
   // ---- FILTERING ----
@@ -1099,6 +1101,9 @@ function applyOtherFilters(list) {
         alert("Error adding staff");
       } else {
         await loadSalesStaff();
+renderSalesSelect();
+
+
       }
     };
   }
@@ -1142,20 +1147,24 @@ function applyOtherFilters(list) {
         alert("Error adding BM");
       } else {
         await loadBusinessManagers();
+renderBMSelect();
+
+
       }
     };
   }
 
-  function renderSalesDatalist() {
-    salesDatalist.innerHTML = (salesStaff || [])
-      .map(s => `<option value="${s.name}">`)
-      .join("");
-  }
+  function renderSalesSelect() {
+  const el = document.getElementById("sales");
+  el.innerHTML = `<option value="">Select Salesperson</option>` +
+    salesStaff.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
+}
 
-  function renderBMDatalist() {
-    bmDatalist.innerHTML = (businessManagers || [])
-      .map(s => `<option value="${s.name}">`)
-      .join("");
+function renderBMSelect() {
+  const el = document.getElementById("bm");
+  el.innerHTML = `<option value="">Select Business Manager</option>` +
+    businessManagers.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
+}
   }
   // ---- APPOINTMENT MODAL ----
   function openApptModal(appt) {
