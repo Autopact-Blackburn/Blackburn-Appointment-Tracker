@@ -799,14 +799,6 @@ window.supa = supa;
   function applyFilters(list) {
   let res = [...list];
 
-function renderSalesFilter() {
-  const el = document.getElementById("filterSales");
-  el.innerHTML =
-    `<option value="">All Sales</option>` +
-    salesStaff.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
-}
-
-
 
   // --- SOLD FILTER FIRST ---
   if (soldFilterMode === "hide") {
@@ -1165,6 +1157,14 @@ function renderBMSelect() {
   el.innerHTML = `<option value="">Select Business Manager</option>` +
     businessManagers.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
 }
+
+function renderSalesFilter() {
+  const el = document.getElementById("filterSales");
+  el.innerHTML =
+    `<option value="">All Sales</option>` +
+    salesStaff.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
+}
+
 
   // ---- APPOINTMENT MODAL ----
   function openApptModal(appt) {
