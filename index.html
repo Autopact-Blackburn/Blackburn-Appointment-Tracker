@@ -766,7 +766,6 @@ window.supa = supa;
       return da - db;
     });
 
-    renderFilters();
     renderAppointments();
     renderMetrics();
     renderLeaderboard();
@@ -795,20 +794,19 @@ window.supa = supa;
   }
 
   // ---- FILTERING ----
-  function renderFilters() {
-    const names = new Set();
-    appointments.forEach(a => a.sales_person && names.add(a.sales_person));
-    filterSalesEl.innerHTML = "<option value=''>All Sales</option>";
-    [...names].sort().forEach(n => {
-      const opt = document.createElement("option");
-      opt.value = n;
-      opt.textContent = n;
-      filterSalesEl.appendChild(opt);
-    });
-  }
+  
 
   function applyFilters(list) {
   let res = [...list];
+
+function renderSalesFilter() {
+  const el = document.getElementById("filterSales");
+  el.innerHTML =
+    `<option value="">All Sales</option>` +
+    salesStaff.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
+}
+
+
 
   // --- SOLD FILTER FIRST ---
   if (soldFilterMode === "hide") {
@@ -1105,6 +1103,7 @@ function applyOtherFilters(list) {
       } else {
   await loadSalesStaff();
   renderSalesSelect();
+renderSalesFilter();
 }
 };
 
