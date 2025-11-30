@@ -837,18 +837,30 @@ function applyOtherFilters(list) {
     // Week OFF mode overrides month restriction — so we skip month filtering
   }
 
-  // Sales filter
+  // ---- SALES FILTER ----
+const s = filterSalesEl.value.trim().toLowerCase();
 
+if (s) {
+  res = res.filter(a => {
+    const person = (a.sales_person || "").trim().toLowerCase();
 
-    const s = filterSalesEl.value;
-    const dept = filterDeptEl.value;
-    if (s && s !== "All Sales") {
-  res = res.filter(a =>
-    (a.sales_person || "").trim().toLowerCase() === s.trim().toLowerCase()
-  );
+    // Match exact OR partial (covers older records)
+    return (
+      person === s ||
+      person.includes(s)
+    );
+  });
 }
 
-    if (dept) res = res.filter(a => (a.department || "") === dept);
+
+
+    if (dept) {
+  res = res.filter(a => {
+    const d = (a.department || "").trim().toLowerCase();
+    return d === dept.trim().toLowerCase();
+  });
+}
+
 
     // SEARCH FILTER
     const q = filterSearchEl.value.trim().toLowerCase();
