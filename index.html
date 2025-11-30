@@ -1058,52 +1058,76 @@ function applyOtherFilters(list) {
   }
 
   function renderSalesSettings() {
-    if (!salesStaff.length) {
-      salesListEl.innerHTML =
-        "<div class='list-item' style='color:var(--muted);'>No sales staff yet.</div>";
-    } else {
-      salesListEl.innerHTML = salesStaff
-        .map(
-          s => `
-          <div class="list-item">
-            <div><strong>${s.name}</strong>${s.active === false ? " (inactive)" : ""}</div>
+  salesListEl.innerHTML = "";
+
+  if (!salesStaff.length) {
+    salesListEl.innerHTML =
+      "<div class='list-item' style='color:var(--muted);'>No sales staff yet.</div>";
+  } else {
+    salesStaff.forEach(s => {
+      const row = document.createElement("div");
+      row.className = "list-item";
+      row.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <strong>${s.name}</strong>${s.active === false ? " (inactive)" : ""}
             <div style="font-size:0.8rem;color:var(--muted);">${s.email || ""}</div>
           </div>
-        `
-        )
-        .join("");
-    }
-
-    const addBlock = document.createElement("div");
-    addBlock.className = "list-item";
-    addBlock.innerHTML = `
-      <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px;">Add Sales Staff</div>
-      <input id="newSalesName" class="filter-input" placeholder="Name" />
-      <input id="newSalesEmail" class="filter-input" placeholder="Email" style="margin-top:6px;" />
-      <button id="addSalesBtn" class="close-panel" style="margin-top:6px;">Add</button>
-    `;
-    salesListEl.appendChild(addBlock);
-
-    document.getElementById("addSalesBtn").onclick = async () => {
-  const name = document.getElementById("newSalesName").value.trim();
-  const email = document.getElementById("newSalesEmail").value.trim();
-
-  if (!name) return alert("Name required");
-
-  const { error } = await supa
-    .from("sales_staff")
-    .insert({ name, email, active: true });
-
-  if (error) {
-    console.error(error);
-    alert("Error adding staff");
-  } else {
-    await loadSalesStaff();
-    renderSalesSelect();
-    renderSalesFilter();
+          <button class="close-panel" 
+                  data-id="${s.id}" 
+                  style="border-color:var(--danger);color:var(--danger);padding:4px 10px;">
+            Delete
+          </button>
+        </div>
+      `;
+      salesListEl.appendChild(row);
+    });
   }
-};  // closes onclick
-}    // closes renderSalesSettings
+
+  // Add block at bottom
+  const addBlock = document.createElement("div");
+  addBlock.className = "list-item";
+  addBlock.innerHTML = `
+    <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px;">Add Sales Staff</div>
+    <input id="newSalesName" class="filter-input" placeholder="Name" />
+    <input id="newSalesEmail" class="filter-input" placeholder="Email" style="margin-top:6px;" />
+    <button id="addSalesBtn" class="close-panel" style="margin-top:6px;">Add</button>
+  `;
+  salesListEl.appendChild(addBlock);
+
+  // Add staff
+  document.getElementById("addSalesBtn").onclick = async () => {
+    const name = document.getElementById("newSalesName").value.trim();
+    const email = document.getElementById("newSalesEmail").value.trim();
+    if (!name) return alert("Name required");
+
+    const { error } = await supa
+      .from("sales_staff")
+      .insert({ name, email, active: true });
+
+    if (error) {
+      console.error(error);
+      alert("Error adding staff");
+    } else {
+      await loadSalesStaff();
+      renderSalesFilter();
+    }
+  };
+
+  // Delete staff
+  salesListEl.addEventListener("click", async e => {
+    const btn = e.target.closest("button[data-id]");
+    if (!btn) return;
+
+    const id = btn.getAttribute("data-id");
+    if (!confirm("Delete this staff member?")) return;
+
+    await supa.from("sales_staff").delete().eq("id", id);
+    await loadSalesStaff();
+    renderSalesFilter();
+  });
+}
+
 
 
   function renderBMSettings() {
@@ -1166,10 +1190,14 @@ function renderBMSelect() {
 
 function renderSalesFilter() {
   const el = document.getElementById("filterSales");
-  el.innerHTML =
-    `<option value="">All Sales</option>` +
-    salesStaff.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
+  el.innerHTML = `
+    <option value="">All Sales</option>
+    ${salesStaff
+      .map(s => `<option value="${s.name}">${s.name}</option>`)
+      .join("")}
+  `;
 }
+
 
 
   // ---- APPOINTMENT MODAL ----
