@@ -1165,7 +1165,7 @@ function renderBMSelect() {
   el.innerHTML = `<option value="">Select Business Manager</option>` +
     businessManagers.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
 }
-  }
+
   // ---- APPOINTMENT MODAL ----
   function openApptModal(appt) {
     lockBodyScroll(true);
