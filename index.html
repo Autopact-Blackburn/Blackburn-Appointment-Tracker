@@ -1085,20 +1085,26 @@ function applyOtherFilters(list) {
     salesListEl.appendChild(addBlock);
 
     document.getElementById("addSalesBtn").onclick = async () => {
-      const name = document.getElementById("newSalesName").value.trim();
-      const email = document.getElementById("newSalesEmail").value.trim();
-      if (!name) return alert("Name required");
-      const { error } = await supa.from("sales_staff").insert({ name, email, active: true });
-      if (error) {
-        console.error(error);
-        alert("Error adding staff");
-      } else {
-  await loadSalesStaff();
-  renderSalesSelect();
+  const name = document.getElementById("newSalesName").value.trim();
+  const email = document.getElementById("newSalesEmail").value.trim();
+
+  if (!name) return alert("Name required");
+
+  const { error } = await supa
+    .from("sales_staff")
+    .insert({ name, email, active: true });
+
+  if (error) {
+    console.error(error);
+    alert("Error adding staff");
+  } else {
+    await loadSalesStaff();
+    renderSalesSelect();
     renderSalesFilter();
-    }
-  };
-}
+  }
+};  // closes onclick
+}    // closes renderSalesSettings
+
 
   function renderBMSettings() {
     if (!businessManagers.length) {
