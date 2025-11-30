@@ -850,7 +850,12 @@ function applyOtherFilters(list) {
 
     const s = filterSalesEl.value;
     const dept = filterDeptEl.value;
-    if (s) res = res.filter(a => (a.sales_person || "") === s);
+    if (s && s !== "All Sales") {
+  res = res.filter(a =>
+    (a.sales_person || "").trim().toLowerCase() === s.trim().toLowerCase()
+  );
+}
+
     if (dept) res = res.filter(a => (a.department || "") === dept);
 
     // SEARCH FILTER
