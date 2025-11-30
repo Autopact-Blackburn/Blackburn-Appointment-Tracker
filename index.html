@@ -1190,12 +1190,6 @@ function renderBMSelect() {
     businessManagers.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
 }
 
-function renderSalesFilter() {
-  const el = document.getElementById("filterSales");
-  el.innerHTML =
-    `<option value="">All Sales</option>` +
-    salesStaff.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
-}
 
 
 function renderSalesFilter() {
