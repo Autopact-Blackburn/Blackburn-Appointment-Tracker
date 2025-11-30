@@ -604,6 +604,8 @@
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmZWxtam5tZWRmZXBsY3VlZXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzMDE0OTMsImV4cCI6MjA3OTg3NzQ5M30.UFv00DEM570CxeFKAUV6LH424joWo3CDTuHhyIbuh80";
 
   const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window.supa = supa;
+
 
   // ---- DOM ----
   const bodyEl = document.getElementById("body");
@@ -1279,6 +1281,14 @@ function applyOtherFilters(list) {
 
     const update = {};
     update[field] = next;
+    // --- SOLD VALIDATION ---
+    if (field === "sold") {
+      // If user attempts to mark SOLD = true
+      if (next === true && (!appt.deal_number || appt.deal_number.trim() === "")) {
+        alert("Please enter the Deal Number before marking as SOLD.");
+        return; // Stop update
+      }
+    }
 
     const { error } = await supa.from("appointments").update(update).eq("id", id);
     if (error) {
