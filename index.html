@@ -1095,11 +1095,11 @@ function applyOtherFilters(list) {
       } else {
   await loadSalesStaff();
   renderSalesSelect();
-renderSalesFilter();
+    renderSalesFilter();
+    }
+  };
 }
-};
 
-}
   function renderBMSettings() {
     if (!businessManagers.length) {
       bmListEl.innerHTML =
