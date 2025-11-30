@@ -647,8 +647,6 @@ window.supa = supa;
   const commentsEl = document.getElementById("comments");
   const apptPanelTitle = document.getElementById("apptPanelTitle");
 
-  const salesDatalist = document.getElementById("salesDatalist");
-  const bmDatalist = document.getElementById("bmDatalist");
 
   const btnExportCsv = document.getElementById("exportCsv");
   const btnEmailSnapshot = document.getElementById("emailSnapshot");
@@ -1100,13 +1098,11 @@ function applyOtherFilters(list) {
         console.error(error);
         alert("Error adding staff");
       } else {
-        await loadSalesStaff();
-renderSalesSelect();
+  await loadSalesStaff();
+  renderSalesSelect();
+}
+};
 
-
-      }
-    };
-  }
 
   function renderBMSettings() {
     if (!businessManagers.length) {
