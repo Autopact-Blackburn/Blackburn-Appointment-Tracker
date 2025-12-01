@@ -441,9 +441,7 @@
       <button id="btnWeek" class="filter-chip">This Week</button>
       <button id="btnSold" class="filter-chip">Sold</button>
 
-      <select id="filterSales" class="filter-input">
-        <option value="">All Sales</option>
-      </select>
+      <select id="filterSales" class="filter-input"></select>
 
       <select id="filterDept" class="filter-input">
         <option value="">All Depts</option>
@@ -1627,11 +1625,12 @@ async function saveAppointment() {
     btnEmailSnapshot.onclick = emailWeekSnapshot;
 
     // INIT LOAD
-    (async () => {
-      await loadAppointments();
-      await loadSalesStaff();
-      await loadBusinessManagers();
-    })();
+(async () => {
+  await loadAppointments();
+  await loadSalesStaff();
+  renderSalesFilter();   // <-- ADD THIS LINE HERE
+  await loadBusinessManagers();
+})();
   });
 </script>
 </body>
