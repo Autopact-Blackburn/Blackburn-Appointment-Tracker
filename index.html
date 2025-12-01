@@ -841,19 +841,12 @@ const dept = filterDeptEl.value;
   }
 
   // ---- SALES FILTER ----
-const s = filterSalesEl.value.trim().toLowerCase();
-
+// ---- SALES FILTER (by Supabase ID) ----
+const s = filterSalesEl.value.trim();
 if (s) {
-  res = res.filter(a => {
-    const person = (a.sales_person || "").trim().toLowerCase();
-
-    // Match exact OR partial (covers older records)
-    return (
-      person === s ||
-      person.includes(s)
-    );
-  });
+  res = res.filter(a => String(a.sales_person_id) === String(s));
 }
+
 
     if (dept) {
   res = res.filter(a => {
@@ -1194,27 +1187,28 @@ renderBMSelect();
   function renderSalesSelect() {
   const el = document.getElementById("sales");
   el.innerHTML = `<option value="">Select Salesperson</option>` +
-    salesStaff.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
+    salesStaff
+      .map(s => `<option value="${s.id}">${s.name}</option>`)
+      .join("");
 }
+
+function renderSalesFilter() {
+  const el = document.getElementById("filterSales");
+  el.innerHTML =
+    `<option value="">All Sales</option>` +
+    salesStaff
+      .map(s => `<option value="${s.id}">${s.name}</option>`)
+      .join("");
+}
+
 
 function renderBMSelect() {
   const el = document.getElementById("bm");
   el.innerHTML = `<option value="">Select Business Manager</option>` +
-    businessManagers.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
+    businessManagers
+      .map(b => `<option value="${b.name}">${b.name}</option>`)
+      .join("");
 }
-
-
-
-function renderSalesFilter() {
-  const el = document.getElementById("filterSales");
-  el.innerHTML = `
-    <option value="">All Sales</option>
-    ${salesStaff
-      .map(s => `<option value="${s.name}">${s.name}</option>`)
-      .join("")}
-  `;
-}
-
 
 
   // ---- APPOINTMENT MODAL ----
@@ -1226,7 +1220,7 @@ function renderSalesFilter() {
       apptIdEl.value = appt.id || "";
       customerEl.value = appt.customer_name || "";
       phoneEl.value = appt.phone || "";
-      salesEl.value = appt.sales_person || "";
+      salesEl.value = appt.sales_person_id || "";
       bmEl.value = appt.business_manager || "";
       deptEl.value = appt.department || "";
       vehicleEl.value = appt.vehicle_interest || "";
@@ -1265,25 +1259,34 @@ function renderSalesFilter() {
     panelAppt.classList.remove("open");
   }
 
-  // ---- SAVE / DELETE ----
-  async function saveAppointment() {
-    const payload = {
-      customer_name: customerEl.value.trim(),
-      phone: phoneEl.value.trim(),
-      sales_person: salesEl.value.trim(),
-      business_manager: bmEl.value.trim(),
-      department: deptEl.value || null,
-      vehicle_interest: vehicleEl.value.trim(),
-      stock_number: stockEl.value.trim(),
-      appt_date: dateEl.value || null,
-      appt_time: timeEl.value || null,
-      appt_show: boolFromSelect(showEl.value),
-      test_drive: boolFromSelect(tdEl.value),
-      sold: boolFromSelect(soldEl.value),
-      deal_number: dealEl.value.trim(),
-      comments: commentsEl.value.trim()
-    };
+async function saveAppointment() {
 
+  // --- SALES PERSON FIX (ID + NAME) ---
+  const sales_person_id = salesEl.value || null;
+  const sales_person_name =
+    salesStaff.find(s => String(s.id) === String(sales_person_id))?.name || "";
+
+  const payload = {
+    customer_name: customerEl.value.trim(),
+    phone: phoneEl.value.trim(),
+
+    sales_person_id: sales_person_id,
+    sales_person: sales_person_name,
+
+    business_manager: bmEl.value.trim(),
+    department: deptEl.value || null,
+    vehicle_interest: vehicleEl.value.trim(),
+    stock_number: stockEl.value.trim(),
+    appt_date: dateEl.value || null,
+    appt_time: timeEl.value || null,
+    appt_show: boolFromSelect(showEl.value),
+    test_drive: boolFromSelect(tdEl.value),
+    sold: boolFromSelect(soldEl.value),
+    deal_number: dealEl.value.trim(),
+    comments: commentsEl.value.trim()
+  };
+
+  
     if (!payload.customer_name) return alert("Customer name required");
     if (!payload.sales_person) return alert("Sales person required");
     if (!payload.department) return alert("Department required");
