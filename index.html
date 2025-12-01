@@ -1118,7 +1118,6 @@ if (s) {
       alert("Error adding staff");
     } else {
       await loadSalesStaff();
-      renderSalesFilter();
     }
   };
 
@@ -1132,7 +1131,6 @@ if (s) {
 
     await supa.from("sales_staff").delete().eq("id", id);
     await loadSalesStaff();
-    renderSalesFilter();
   });
 }
 
