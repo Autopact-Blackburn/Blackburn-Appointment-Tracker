@@ -17,6 +17,7 @@
       --muted: #9ca3af;
       --border: #1f2933;
       --accent: #0ea5e9;
+      --accent-soft: #0ea5e933;
       --danger: #ef4444;
       --warning: #fbbf24;
       --success: #22c55e;
@@ -36,6 +37,7 @@
       --muted: #6b7280;
       --border: #d1d5db;
       --accent: #2563eb;
+      --accent-soft: #2563eb33;
     }
 
     * {
@@ -105,6 +107,23 @@
       justify-content: flex-end;
     }
 
+    .btn-icon {
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
+
+    .btn-icon:hover {
+      background: var(--card-alt);
+      transform: translateY(-1px);
+    }
+
     /* WEEK BUTTON DEFAULT (OFF) */
     #btnWeek {
       border-color: var(--accent);
@@ -144,17 +163,6 @@
         0 0 10px rgba(251,191,36,0.45),
         0 0 18px rgba(251,191,36,0.28);
       font-weight: 600;
-    }
-
-    .btn-icon {
-      padding: 8px 10px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--card);
-      color: var(--text);
-      cursor: pointer;
-      font-size: 0.8rem;
-      white-space: nowrap;
     }
 
     /* Metrics ---------------------------------------------------- */
@@ -277,6 +285,22 @@
     .shown { background: rgba(251,191,36,0.15); }
     .overdue { background: rgba(239,68,68,0.15); }
 
+    /* Salesperson pill ------------------------------------------ */
+    .sales-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--accent);
+      font-size: 0.75rem;
+      color: var(--accent);
+      background: var(--accent-soft);
+      max-width: 140px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     /* Quick-action row */
     .quick-row {
       display: flex;
@@ -381,12 +405,23 @@
       width: 100%;
       text-align: center;
       font-size: 0.85rem;
+      color: var(--text);
+      font-weight: 500;
     }
 
-    .field-label {
-      font-size: 0.8rem;
-      color: var(--muted);
-      margin-bottom: 4px;
+    .close-panel:hover {
+      background: var(--card-alt);
+    }
+
+    /* BM delete pill */
+    .bm-delete-btn {
+      border-radius: 999px;
+      border: 1px solid var(--danger);
+      background: transparent;
+      color: var(--danger);
+      padding: 2px 8px;
+      font-size: 0.75rem;
+      cursor: pointer;
     }
 
     @media (max-width: 600px) {
@@ -441,6 +476,7 @@
       <button id="btnWeek" class="filter-chip">This Week</button>
       <button id="btnSold" class="filter-chip">Sold</button>
 
+      <!-- Sales filter will be populated by JS -->
       <select id="filterSales" class="filter-input"></select>
 
       <select id="filterDept" class="filter-input">
@@ -504,15 +540,15 @@
         <div class="list-item">
           <div class="field-label">Sales Person</div>
           <select id="sales" class="filter-input" required>
-  <option value="">Select Salesperson</option>
-</select>
+            <option value="">Select Salesperson</option>
+          </select>
         </div>
 
         <div class="list-item">
           <div class="field-label">Business Manager</div>
           <select id="bm" class="filter-input">
-  <option value="">Select Business Manager</option>
-</select>
+            <option value="">Select Business Manager</option>
+          </select>
         </div>
 
         <div class="list-item">
@@ -604,8 +640,7 @@
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmZWxtam5tZWRmZXBsY3VlZXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzMDE0OTMsImV4cCI6MjA3OTg3NzQ5M30.UFv00DEM570CxeFKAUV6LH424joWo3CDTuHhyIbuh80";
 
   const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-window.supa = supa;
-
+  window.supa = supa;
 
   // ---- DOM ----
   const bodyEl = document.getElementById("body");
@@ -644,7 +679,6 @@ window.supa = supa;
   const dealEl = document.getElementById("deal");
   const commentsEl = document.getElementById("comments");
   const apptPanelTitle = document.getElementById("apptPanelTitle");
-
 
   const btnExportCsv = document.getElementById("exportCsv");
   const btnEmailSnapshot = document.getElementById("emailSnapshot");
@@ -778,8 +812,7 @@ window.supa = supa;
     salesStaff = data || [];
     renderSalesSettings();
     renderSalesSelect();
-renderSalesFilter();
-
+    renderSalesFilter();
   }
 
   async function loadBusinessManagers() {
@@ -794,65 +827,57 @@ renderSalesFilter();
   }
 
   // ---- FILTERING ----
-  
-
   function applyFilters(list) {
-  let res = [...list];
+    let res = [...list];
 
+    // --- SOLD FILTER FIRST ---
+    if (soldFilterMode === "hide") {
+      res = res.filter(a => a.sold !== true);
+    } else if (soldFilterMode === "only") {
+      res = res.filter(a => a.sold === true);
+    }
 
-  // --- SOLD FILTER FIRST ---
-  if (soldFilterMode === "hide") {
-    res = res.filter(a => a.sold !== true);
-  } else if (soldFilterMode === "only") {
-    res = res.filter(a => a.sold === true);
+    // --- WEEK FILTER ---
+    if (currentView === "week" && weekRange) {
+      res = res.filter(
+        a =>
+          a.appt_date &&
+          a.appt_date >= weekRange.start &&
+          a.appt_date <= weekRange.end
+      );
+      return applyOtherFilters(res);   // apply search/department/etc after week
+    }
+
+    // --- WEEK OFF = SHOW ALL (except sold, already handled above) ---
+    return applyOtherFilters(res);
   }
 
-  // --- WEEK FILTER ---
-  if (currentView === "week" && weekRange) {
-    res = res.filter(
-      a =>
-        a.appt_date &&
-        a.appt_date >= weekRange.start &&
-        a.appt_date <= weekRange.end
-    );
-    return applyOtherFilters(res);   // apply search/department/etc after week
-  }
+  function applyOtherFilters(list) {
+    let res = [...list];
 
-  // --- WEEK OFF = SHOW ALL (except sold, already handled above) ---
-  return applyOtherFilters(res);
-}
-function applyOtherFilters(list) {
-  let res = [...list];
+    const dept = filterDeptEl.value;
 
-const dept = filterDeptEl.value;
+    // Date filter (specific day)
+    if (currentView === "day" && currentDay) {
+      res = res.filter(a => a.appt_date === currentDay);
+    }
 
+    // Month dropdown intentionally not restricting further unless you want later
 
-  // Date filter (specific day)
-  if (currentView === "day" && currentDay) {
-    res = res.filter(a => a.appt_date === currentDay);
-  }
+    // ---- SALES FILTER (by Supabase ID) ----
+    const s = filterSalesEl.value.trim();
+    if (s) {
+      res = res.filter(a => String(a.sales_person_id) === String(s));
+    }
 
-  // Month dropdown only applies when day filter is NOT active
-  if (!currentDay && filterMonthEl.value) {
-    // Do NOT restrict to month unless user has explicitly changed month
-    // Week OFF mode overrides month restriction — so we skip month filtering
-  }
-
-  // ---- SALES FILTER ----
-// ---- SALES FILTER (by Supabase ID) ----
-const s = filterSalesEl.value.trim();
-if (s) {
-  res = res.filter(a => String(a.sales_person_id) === String(s));
-}
-
-
+    // ---- DEPARTMENT FILTER (case-insensitive includes) ----
     if (dept) {
-  res = res.filter(a => {
-    const d = (a.department || "").trim().toLowerCase();
-    return d === dept.trim().toLowerCase();
-  });
-}
-
+      const deptLower = dept.trim().toLowerCase();
+      res = res.filter(a => {
+        const d = (a.department || "").trim().toLowerCase();
+        return d.includes(deptLower);
+      });
+    }
 
     // SEARCH FILTER
     const q = filterSearchEl.value.trim().toLowerCase();
@@ -881,7 +906,6 @@ if (s) {
 
     return res;
   }
-
   // ---- RENDER ----
   function renderAppointments() {
     const filtered = applyFilters(appointments);
@@ -909,16 +933,19 @@ if (s) {
           <article class="appt-card ${cls}" data-id="${a.id}">
             <div class="dept-strip" style="background:${strip};"></div>
             <div class="appt-body">
-              <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
                 <div class="appt-name">${a.customer_name || ""}</div>
-                <div style="font-size:0.9rem;color:var(--accent);font-weight:600;">
-                  ${a.appt_time || ""}
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                  <div style="font-size:0.9rem;color:var(--accent);font-weight:600;">
+                    ${a.appt_time || ""}
+                  </div>
+                  <span class="sales-pill">${a.sales_person || "Unassigned"}</span>
                 </div>
               </div>
               <div class="appt-meta">
-                ${a.appt_date || ""} · ${a.sales_person || ""}${
-          a.department ? " · " + a.department : ""
-        }
+                ${a.appt_date || ""}${
+                  a.department ? " · " + a.department : ""
+                }
               </div>
               <div class="appt-meta" style="margin-top:2px;">
                 ${a.vehicle_interest ? "· " + a.vehicle_interest + " " : ""}
@@ -1064,91 +1091,102 @@ if (s) {
   }
 
   function renderSalesSettings() {
-  salesListEl.innerHTML = "";
+    salesListEl.innerHTML = "";
 
-  if (!salesStaff.length) {
-    salesListEl.innerHTML =
-      "<div class='list-item' style='color:var(--muted);'>No sales staff yet.</div>";
-  } else {
-    salesStaff.forEach(s => {
-      const row = document.createElement("div");
-      row.className = "list-item";
-      row.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <strong>${s.name}</strong>${s.active === false ? " (inactive)" : ""}
-            <div style="font-size:0.8rem;color:var(--muted);">${s.email || ""}</div>
+    if (!salesStaff.length) {
+      salesListEl.innerHTML =
+        "<div class='list-item' style='color:var(--muted);'>No sales staff yet.</div>";
+    } else {
+      salesStaff.forEach(s => {
+        const row = document.createElement("div");
+        row.className = "list-item";
+        row.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <strong>${s.name}</strong>${s.active === false ? " (inactive)" : ""}
+              <div style="font-size:0.8rem;color:var(--muted);">${s.email || ""}</div>
+            </div>
+            <button class="close-panel"
+                    data-id="${s.id}"
+                    style="max-width:90px;border-color:var(--danger);color:var(--danger);padding:4px 10px;">
+              Delete
+            </button>
           </div>
-          <button class="close-panel" 
-                  data-id="${s.id}" 
-                  style="border-color:var(--danger);color:var(--danger);padding:4px 10px;">
-            Delete
-          </button>
-        </div>
-      `;
-      salesListEl.appendChild(row);
-    });
+        `;
+        salesListEl.appendChild(row);
+      });
+    }
+
+    // Add block at bottom
+    const addBlock = document.createElement("div");
+    addBlock.className = "list-item";
+    addBlock.innerHTML = `
+      <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px;">Add Sales Staff</div>
+      <input id="newSalesName" class="filter-input" placeholder="Name" />
+      <input id="newSalesEmail" class="filter-input" placeholder="Email" style="margin-top:6px;" />
+      <button id="addSalesBtn" class="close-panel" style="margin-top:6px;border-color:var(--accent);color:var(--accent);">
+        Add
+      </button>
+    `;
+    salesListEl.appendChild(addBlock);
+
+    // Add staff
+    document.getElementById("addSalesBtn").onclick = async () => {
+      const name = document.getElementById("newSalesName").value.trim();
+      const email = document.getElementById("newSalesEmail").value.trim();
+      if (!name) return alert("Name required");
+
+      const { error } = await supa
+        .from("sales_staff")
+        .insert({ name, email, active: true });
+
+      if (error) {
+        console.error(error);
+        alert("Error adding staff");
+      } else {
+        await loadSalesStaff();
+      }
+    };
+
+    // Delete staff (event delegation)
+    salesListEl.onclick = async e => {
+      const btn = e.target.closest("button[data-id]");
+      if (!btn) return;
+
+      const id = btn.getAttribute("data-id");
+      if (!confirm("Delete this staff member?")) return;
+
+      const { error } = await supa.from("sales_staff").delete().eq("id", id);
+      if (error) {
+        console.error(error);
+        alert("Error deleting staff");
+      } else {
+        await loadSalesStaff();
+      }
+    };
   }
 
-  // Add block at bottom
-  const addBlock = document.createElement("div");
-  addBlock.className = "list-item";
-  addBlock.innerHTML = `
-    <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px;">Add Sales Staff</div>
-    <input id="newSalesName" class="filter-input" placeholder="Name" />
-    <input id="newSalesEmail" class="filter-input" placeholder="Email" style="margin-top:6px;" />
-    <button id="addSalesBtn" class="close-panel" style="margin-top:6px;">Add</button>
-  `;
-  salesListEl.appendChild(addBlock);
-
-  // Add staff
-  document.getElementById("addSalesBtn").onclick = async () => {
-    const name = document.getElementById("newSalesName").value.trim();
-    const email = document.getElementById("newSalesEmail").value.trim();
-    if (!name) return alert("Name required");
-
-    const { error } = await supa
-      .from("sales_staff")
-      .insert({ name, email, active: true });
-
-    if (error) {
-      console.error(error);
-      alert("Error adding staff");
-    } else {
-      await loadSalesStaff();
-    }
-  };
-
-  // Delete staff
-  salesListEl.addEventListener("click", async e => {
-    const btn = e.target.closest("button[data-id]");
-    if (!btn) return;
-
-    const id = btn.getAttribute("data-id");
-    if (!confirm("Delete this staff member?")) return;
-
-    await supa.from("sales_staff").delete().eq("id", id);
-    await loadSalesStaff();
-  });
-}
-
-
-
   function renderBMSettings() {
+    bmListEl.innerHTML = "";
+
     if (!businessManagers.length) {
       bmListEl.innerHTML =
         "<div class='list-item' style='color:var(--muted);'>No business managers yet.</div>";
     } else {
-      bmListEl.innerHTML = businessManagers
-        .map(
-          s => `
-          <div class="list-item">
-            <div><strong>${s.name}</strong>${s.active === false ? " (inactive)" : ""}</div>
-            <div style="font-size:0.8rem;color:var(--muted);">${s.email || ""}</div>
+      businessManagers.forEach(b => {
+        const row = document.createElement("div");
+        row.className = "list-item";
+        row.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+            <div>
+              <strong>${b.name}</strong>${b.active === false ? " (inactive)" : ""}
+              <div style="font-size:0.8rem;color:var(--muted);">${b.email || ""}</div>
+            </div>
+            <button class="bm-delete-btn" data-id="${b.id}">✕</button>
           </div>
-        `
-        )
-        .join("");
+        `;
+        bmListEl.appendChild(row);
+      });
     }
 
     const addBlock = document.createElement("div");
@@ -1157,7 +1195,9 @@ if (s) {
       <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px;">Add Business Manager</div>
       <input id="newBmName" class="filter-input" placeholder="Name" />
       <input id="newBmEmail" class="filter-input" placeholder="Email" style="margin-top:6px;" />
-      <button id="addBmBtn" class="close-panel" style="margin-top:6px;">Add</button>
+      <button id="addBmBtn" class="close-panel" style="margin-top:6px;border-color:var(--accent);color:var(--accent);">
+        Add
+      </button>
     `;
     bmListEl.appendChild(addBlock);
 
@@ -1173,39 +1213,48 @@ if (s) {
         alert("Error adding BM");
       } else {
         await loadBusinessManagers();
-renderBMSelect();
+      }
+    };
 
-
+    bmListEl.onclick = async e => {
+      const btn = e.target.closest(".bm-delete-btn");
+      if (!btn) return;
+      const id = btn.getAttribute("data-id");
+      if (!confirm("Delete this business manager?")) return;
+      const { error } = await supa.from("business_managers").delete().eq("id", id);
+      if (error) {
+        console.error(error);
+        alert("Error deleting BM");
+      } else {
+        await loadBusinessManagers();
       }
     };
   }
 
   function renderSalesSelect() {
-  const el = document.getElementById("sales");
-  el.innerHTML = `<option value="">Select Salesperson</option>` +
-    salesStaff
-      .map(s => `<option value="${s.id}">${s.name}</option>`)
-      .join("");
-}
+    const el = document.getElementById("sales");
+    el.innerHTML = `<option value="">Select Salesperson</option>` +
+      salesStaff
+        .map(s => `<option value="${s.id}">${s.name}</option>`)
+        .join("");
+  }
 
-function renderSalesFilter() {
-  const el = document.getElementById("filterSales");
-  el.innerHTML =
-    `<option value="">All Sales</option>` +
-    salesStaff
-      .map(s => `<option value="${s.id}">${s.name}</option>`)
-      .join("");
-}
+  function renderSalesFilter() {
+    const el = document.getElementById("filterSales");
+    el.innerHTML =
+      `<option value="">All Sales</option>` +
+      salesStaff
+        .map(s => `<option value="${s.id}">${s.name}</option>`)
+        .join("");
+  }
 
-
-function renderBMSelect() {
-  const el = document.getElementById("bm");
-  el.innerHTML = `<option value="">Select Business Manager</option>` +
-    businessManagers
-      .map(b => `<option value="${b.name}">${b.name}</option>`)
-      .join("");
-}
-
+  function renderBMSelect() {
+    const el = document.getElementById("bm");
+    el.innerHTML = `<option value="">Select Business Manager</option>` +
+      businessManagers
+        .map(b => `<option value="${b.name}">${b.name}</option>`)
+        .join("");
+  }
 
   // ---- APPOINTMENT MODAL ----
   function openApptModal(appt) {
@@ -1255,34 +1304,30 @@ function renderBMSelect() {
     panelAppt.classList.remove("open");
   }
 
-async function saveAppointment() {
+  async function saveAppointment() {
+    // --- SALES PERSON FIX (ID + NAME) ---
+    const sales_person_id = salesEl.value || null;
+    const sales_person_name =
+      salesStaff.find(s => String(s.id) === String(sales_person_id))?.name || "";
 
-  // --- SALES PERSON FIX (ID + NAME) ---
-  const sales_person_id = salesEl.value || null;
-  const sales_person_name =
-    salesStaff.find(s => String(s.id) === String(sales_person_id))?.name || "";
+    const payload = {
+      customer_name: customerEl.value.trim(),
+      phone: phoneEl.value.trim(),
+      sales_person_id: sales_person_id,
+      sales_person: sales_person_name,
+      business_manager: bmEl.value.trim(),
+      department: deptEl.value || null,
+      vehicle_interest: vehicleEl.value.trim(),
+      stock_number: stockEl.value.trim(),
+      appt_date: dateEl.value || null,
+      appt_time: timeEl.value || null,
+      appt_show: boolFromSelect(showEl.value),
+      test_drive: boolFromSelect(tdEl.value),
+      sold: boolFromSelect(soldEl.value),
+      deal_number: dealEl.value.trim(),
+      comments: commentsEl.value.trim()
+    };
 
-  const payload = {
-    customer_name: customerEl.value.trim(),
-    phone: phoneEl.value.trim(),
-
-    sales_person_id: sales_person_id,
-    sales_person: sales_person_name,
-
-    business_manager: bmEl.value.trim(),
-    department: deptEl.value || null,
-    vehicle_interest: vehicleEl.value.trim(),
-    stock_number: stockEl.value.trim(),
-    appt_date: dateEl.value || null,
-    appt_time: timeEl.value || null,
-    appt_show: boolFromSelect(showEl.value),
-    test_drive: boolFromSelect(tdEl.value),
-    sold: boolFromSelect(soldEl.value),
-    deal_number: dealEl.value.trim(),
-    comments: commentsEl.value.trim()
-  };
-
-  
     if (!payload.customer_name) return alert("Customer name required");
     if (!payload.sales_person) return alert("Sales person required");
     if (!payload.department) return alert("Department required");
@@ -1339,15 +1384,25 @@ async function saveAppointment() {
     else next = null;
 
     const update = {};
-    update[field] = next;
-    // --- SOLD VALIDATION ---
+
+    // --- SOLD VALIDATION + DEAL PROMPT ---
     if (field === "sold") {
-      // If user attempts to mark SOLD = true
-      if (next === true && (!appt.deal_number || appt.deal_number.trim() === "")) {
-        alert("Please enter the Deal Number before marking as SOLD.");
-        return; // Stop update
+      if (next === true) {
+        // Turning ON sold
+        let dealNumber = appt.deal_number || "";
+        if (!dealNumber) {
+          dealNumber = prompt("Enter Deal Number for this sold appointment:", "");
+          if (!dealNumber) {
+            // User cancelled or left blank → do not change sold
+            return;
+          }
+        }
+        update.deal_number = dealNumber.trim();
+        appt.deal_number = update.deal_number;
       }
     }
+
+    update[field] = next;
 
     const { error } = await supa.from("appointments").update(update).eq("id", id);
     if (error) {
@@ -1477,9 +1532,15 @@ async function saveAppointment() {
     const subject = encodeURIComponent("Blackburn WTD Appointment Snapshot");
     const body = encodeURIComponent(lines.join("\n"));
 
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
-  }
+    // collect recipient emails (sales + BMs, active only)
+    const recipients = [
+      ...salesStaff.filter(s => s.active !== false && s.email).map(s => s.email),
+      ...businessManagers.filter(b => b.active !== false && b.email).map(b => b.email)
+    ];
+    const to = encodeURIComponent(recipients.join(";"));
 
+    window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+  }
   // ---- EVENTS ----
   document.addEventListener("DOMContentLoaded", () => {
     initMonthSelector();
@@ -1593,7 +1654,7 @@ async function saveAppointment() {
       renderLeaderboard();
     };
 
-    // SOLD PILL TOGGLE (Option B)
+    // SOLD PILL TOGGLE
     btnSoldEl.onclick = () => {
       if (soldFilterMode === "hide") {
         soldFilterMode = "only";
@@ -1614,6 +1675,20 @@ async function saveAppointment() {
       renderLeaderboard();
     };
 
+    // Sales filter
+    filterSalesEl.onchange = () => {
+      renderAppointments();
+      renderMetrics();
+      renderLeaderboard();
+    };
+
+    // Department filter
+    filterDeptEl.onchange = () => {
+      renderAppointments();
+      renderMetrics();
+      renderLeaderboard();
+    };
+
     // Dark / Light toggle
     document.getElementById("toggleMode").onclick = () => {
       const isLight = bodyEl.classList.toggle("light");
@@ -1625,12 +1700,11 @@ async function saveAppointment() {
     btnEmailSnapshot.onclick = emailWeekSnapshot;
 
     // INIT LOAD
-(async () => {
-  await loadAppointments();
-  await loadSalesStaff();
-  renderSalesFilter();   // <-- ADD THIS LINE HERE
-  await loadBusinessManagers();
-})();
+    (async () => {
+      await loadAppointments();
+      await loadSalesStaff();
+      await loadBusinessManagers();
+    })();
   });
 </script>
 </body>
