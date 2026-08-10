@@ -199,6 +199,7 @@ let appointments=[],salesStaff=[],businessManagers=[],activities=[],currentUser=
 const selectedAppointmentIds=new Set();
 const isSalesRole=s=>(s?.role||"sales").toLowerCase()==="sales";
 const isManagerRole=s=>["admin","manager"].includes((s?.role||"").toLowerCase());
+const canBulkAppointment=a=>isManagerRole(currentStaff)||(isSalesRole(currentStaff)&&String(a?.sales_person_id||"")===String(currentStaff?.id||""));
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
 function localDateISO(d=new Date()){const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)}
