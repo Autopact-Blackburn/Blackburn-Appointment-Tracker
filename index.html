@@ -200,6 +200,36 @@ const selectedAppointmentIds=new Set();
 const isSalesRole=s=>(s?.role||"sales").toLowerCase()==="sales";
 const isManagerRole=s=>["admin","manager"].includes((s?.role||"").toLowerCase());
 const canBulkAppointment=a=>isManagerRole(currentStaff)||(isSalesRole(currentStaff)&&String(a?.sales_person_id||"")===String(currentStaff?.id||""));
+function syncBulkBar(rows=[]){
+  const eligible=(rows||[]).filter(canBulkAppointment);
+  const eligibleIds=new Set(eligible.map(a=>String(a.id)));
+
+  // Drop selections that are no longer visible/eligible so the toolbar never lies.
+  [...selectedAppointmentIds].forEach(id=>{
+    if(!eligibleIds.has(String(id))) selectedAppointmentIds.delete(String(id));
+  });
+
+  const selectedCount=selectedAppointmentIds.size;
+  const countEl=$("#bulkCount");
+  const master=$("#selectAllRows");
+  if(countEl) countEl.textContent=`${selectedCount} selected`;
+
+  if(master){
+    const selectedVisible=eligible.filter(a=>selectedAppointmentIds.has(String(a.id))).length;
+    master.disabled=eligible.length===0;
+    master.checked=eligible.length>0 && selectedVisible===eligible.length;
+    master.indeterminate=selectedVisible>0 && selectedVisible<eligible.length;
+  }
+
+  $$('[data-bulk]').forEach(btn=>{
+    const action=btn.dataset.bulk;
+    if(action==='clear'){
+      btn.disabled=selectedCount===0;
+      return;
+    }
+    btn.disabled=selectedCount===0;
+  });
+}
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
 function localDateISO(d=new Date()){const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)}
